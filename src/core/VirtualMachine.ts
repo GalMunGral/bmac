@@ -1,9 +1,9 @@
 import { Address, AddressKind, CellKind, Coords2D, ExecutionContext, Operation } from './types';
 import { assert } from './utils';
-import { DataMemory } from './DataMemory';
+import { Memory2D } from './Memory2D';
 
 export class VirtualMachine {
-  public data = new DataMemory();
+  public data = new Memory2D();
   public flag: boolean | undefined = undefined;
 
   public contexts = new Array<ExecutionContext>({

@@ -1,7 +1,7 @@
 import { Address, AddressKind, Cell, CellKind } from './types';
 import { assert } from './utils';
 
-export class DataMemory {
+export class Memory2D {
   private grid: Array<Array<Cell>> = [
     [
       { kind: CellKind.Data, data: 0 },

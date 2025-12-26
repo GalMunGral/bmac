@@ -1,0 +1,33 @@
+<div class="w-screen h-screen flex flex-row">
+  <div
+    class="w-[120px] flex-none bg-gray-50 drop-shadow-2xl flex flex-col items-end gap-[5px] p-[10px] overflow-scroll">
+    @for (operation of looper.operationOptions; track operation) {
+      <p-button [label]="operation" (click)="selectOperation(operation)" class="w-full" styleClass="w-full"/>
+    }
+    <div>
+      {{ looper.vm.flag | toString }}
+    </div>
+    <div class="w-full">
+      @for (_ of looper.vm.contexts; track $index) {
+        <div class="h-[5px] bg-black my-[2px]"></div>
+      }
+    </div>
+  </div>
+  <div class="min-w-0 flex-auto overflow-scroll p-[4px]" [style.background-color]="paused ? '#ffffff' : '#ccffcc'">
+    <table class="table-fixed w-0">
+      @for (row of indices; let i = $index; track i) {
+        <tr>
+          @for (_ of row; let j = $index; track j) {
+            <td
+              class="w-[25px] h-[25px] border text-[12px] text-center hover:bg-gray-400! transition-all active:bg-black! cursor-pointer font-bold"
+              [style.background-color]="isOrigin(i, j) ? '#ffffcc' : isSrc(i, j) ? '#ccccff' : isDst(i, j) ? '#ffcccc' : 'transparent'"
+              (click)="looper.selectCellAt(i, j)"
+            >
+              {{ dataAt(i, j) }}
+            </td>
+          }
+        </tr>
+      }
+    </table>
+  </div>
+</div>

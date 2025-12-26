@@ -4,8 +4,8 @@ import {
   AddressKind,
   AddressMode,
   CellKind,
-  Coords2D,
   Instruction,
+  IVec2,
   Operation,
 } from './types';
 import { assert } from './utils';
@@ -71,11 +71,11 @@ export class Looper {
   }
 
   public toAddress(i: number, j: number) {
-    const cell = this.vm.data.readAt(new Coords2D(i, j));
+    const cell = this.vm.data.readAt(new IVec2(i, j));
     const globalAddr = new Address(
       cell?.kind === CellKind.Address ? AddressKind.IndirectAddress : AddressKind.DirectAddress,
       AddressMode.Global,
-      new Coords2D(i, j),
+      new IVec2(i, j),
     );
     return this.mode === AddressMode.Global ? globalAddr : globalAddr.toLocal(this.vm.origin);
   }
@@ -107,9 +107,8 @@ export class Looper {
       case Operation.Modulo: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const srcCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
-        const dstCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
-
+        const srcCell = this.vm.read(this.srcAddr);
+        const dstCell = this.vm.read(this.srcAddr);
         this.replace({
           kind,
           src: this.srcAddr,
@@ -121,7 +120,7 @@ export class Looper {
       case Operation.PointerIncrement: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const dataCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
+        const dataCell = this.vm.read(this.srcAddr);
         assert(dataCell !== undefined && dataCell.kind === CellKind.Data);
         assert(this.dstAddr.kind === AddressKind.IndirectAddress);
         this.replace({

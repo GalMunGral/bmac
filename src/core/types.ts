@@ -8,22 +8,22 @@ export enum AddressMode {
   Local = 'Local',
 }
 
-export class Coords2D {
+export class IVec2 {
   constructor(
     public i: number = 0,
     public j: number = 0,
   ) {}
 
-  public equals(other: Coords2D) {
+  public equals(other: IVec2) {
     return this.i === other.i && this.j === other.j;
   }
 
-  public add(other: Coords2D) {
-    return new Coords2D(this.i + other.i, this.j + other.j);
+  public add(other: IVec2) {
+    return new IVec2(this.i + other.i, this.j + other.j);
   }
 
-  public sub(other: Coords2D) {
-    return new Coords2D(this.i - other.i, this.j - other.j);
+  public sub(other: IVec2) {
+    return new IVec2(this.i - other.i, this.j - other.j);
   }
 }
 
@@ -31,10 +31,14 @@ export class Address {
   constructor(
     public kind: AddressKind,
     public mode: AddressMode,
-    public coords: Coords2D,
+    public coords: IVec2,
   ) {}
 
-  public toLocal(origin: Coords2D) {
+  public add(offset: IVec2) {
+    return new Address(this.kind, this.mode, this.coords.add(offset));
+  }
+
+  public toLocal(origin: IVec2) {
     return new Address(
       this.kind,
       AddressMode.Local,
@@ -42,7 +46,7 @@ export class Address {
     );
   }
 
-  public toGlobal(origin: Coords2D) {
+  public toGlobal(origin: IVec2) {
     return new Address(
       this.kind,
       AddressMode.Global,
@@ -64,7 +68,7 @@ export interface DataCell {
 
 export interface AddressCell {
   kind: CellKind.Address;
-  coords: Coords2D;
+  addr: Address;
 }
 
 export interface CodeCell {
@@ -140,7 +144,7 @@ export interface InstructionRef {
 }
 
 export interface ExecutionContext {
-  origin: Coords2D;
+  origin: IVec2;
   prevInstruction: InstructionRef;
   currInstruction: InstructionRef;
 }

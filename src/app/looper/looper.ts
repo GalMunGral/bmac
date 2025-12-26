@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, HostListener, inject } from '@angular/cor
 import { Looper } from '../../core/Looper';
 import { VirtualMachine } from '../../core/VirtualMachine';
 import { ButtonModule } from 'primeng/button';
-import { AddressMode, CellKind, Coords2D, Operation } from '../../core/types';
+import { AddressMode, CellKind, IVec2, Operation } from '../../core/types';
 import { Card } from 'primeng/card';
 
 @Component({
@@ -58,30 +58,30 @@ export class LooperComponent {
 
   isSrc(i: number, j: number) {
     const o = this.looper.vm.origin;
-    const p = new Coords2D(i, j);
+    const p = new IVec2(i, j);
     return Boolean(this.looper.srcAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastSrc(i: number, j: number) {
     const o = this.looper.vm.origin;
-    const p = new Coords2D(i, j);
+    const p = new IVec2(i, j);
     return Boolean(this.looper.prevSrc?.toGlobal(o).coords.equals(p));
   }
 
   isDst(i: number, j: number) {
     const o = this.looper.vm.origin;
-    const p = new Coords2D(i, j);
+    const p = new IVec2(i, j);
     return Boolean(this.looper.dstAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastDst(i: number, j: number) {
     const o = this.looper.vm.origin;
-    const p = new Coords2D(i, j);
+    const p = new IVec2(i, j);
     return Boolean(this.looper.prevDst?.toGlobal(o).coords.equals(p));
   }
 
   isOrigin(i: number, j: number) {
-    const p = new Coords2D(i, j);
+    const p = new IVec2(i, j);
     return this.looper.vm.origin.equals(p);
   }
 
@@ -114,11 +114,11 @@ export class LooperComponent {
   }
 
   dataAt(i: number, j: number): string {
-    const cell = this.looper.vm.data.readAt(new Coords2D(i, j));
+    const cell = this.looper.vm.data.readAt(new IVec2(i, j));
     if (!cell) return '';
     switch (cell.kind) {
       case CellKind.Address: {
-        const c = this.looper.vm.data.readAt(cell.coords);
+        const c = this.looper.vm.read(cell.addr);
         return '*' + (c && c.kind === CellKind.Data ? c.data : '');
       }
       case CellKind.Data:

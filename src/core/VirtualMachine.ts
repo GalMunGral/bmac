@@ -2,9 +2,10 @@ import {
   Address,
   AddressKind,
   AddressMode,
+  Cell,
   CellKind,
-  Coords2D,
   ExecutionContext,
+  IVec2,
   Operation,
 } from './types';
 import { assert } from './utils';
@@ -15,7 +16,7 @@ export class VirtualMachine {
   public flag: boolean | undefined = undefined;
 
   public contexts = new Array<ExecutionContext>({
-    origin: new Coords2D(),
+    origin: new IVec2(),
     prevInstruction: { instr: { kind: Operation.Nop } },
     currInstruction: { instr: { kind: Operation.Nop } },
   });
@@ -26,8 +27,34 @@ export class VirtualMachine {
     return context;
   }
 
-  public get origin(): Coords2D {
+  public get origin(): IVec2 {
     return this.currentContext.origin;
+  }
+
+  public read(addr: Address): Cell | undefined {
+    switch (addr.kind) {
+      case AddressKind.DirectAddress: {
+        return this.data.readAt(addr.toGlobal(this.origin).coords);
+      }
+      case AddressKind.IndirectAddress: {
+        const c = this.data.readAt(addr.toGlobal(this.origin).coords);
+        assert(c !== undefined && c.kind === CellKind.Address);
+        return this.data.readAt(c.addr.toGlobal(this.origin).coords);
+      }
+    }
+  }
+
+  public write(addr: Address, cell: Cell): void {
+    switch (addr.kind) {
+      case AddressKind.DirectAddress: {
+        return this.data.writeAt(addr.toGlobal(this.origin).coords, cell);
+      }
+      case AddressKind.IndirectAddress: {
+        const c = this.data.readAt(addr.toGlobal(this.origin).coords);
+        assert(c !== undefined && c.kind === CellKind.Address);
+        return this.data.writeAt(c.addr.toGlobal(this.origin).coords, cell);
+      }
+    }
   }
 
   public execute(): boolean {
@@ -40,29 +67,30 @@ export class VirtualMachine {
       case Operation.Pointer: {
         this.data.writeAt(this.origin.add(instr.dst.coords), {
           kind: CellKind.Address,
-          coords: instr.src.coords, // relative
+          addr: instr.src,
         });
         this.flag = undefined;
         this.currentContext.currInstruction = instr.next;
         return true;
       }
       case Operation.PointerIncrement: {
-        const addrCell = this.data.readAt(this.origin.add(instr.dst.coords));
+        const dstGlobalCoords = instr.dst.toGlobal(this.origin).coords;
+        const addrCell = this.data.readAt(dstGlobalCoords);
         assert(addrCell !== undefined && addrCell.kind === CellKind.Address);
-        const dataCell = this.data.read(instr.src.toGlobal(this.origin));
+        const dataCell = this.read(instr.src);
         assert(dataCell !== undefined && dataCell.kind === CellKind.Data);
-        this.data.writeAt(this.origin.add(instr.dst.coords), {
+        this.data.writeAt(dstGlobalCoords, {
           kind: CellKind.Address,
-          coords: new Coords2D(addrCell.coords.i, addrCell.coords.j + Math.floor(dataCell.data)),
+          addr: addrCell.addr.add(new IVec2(0, Math.floor(dataCell.data))),
         });
         this.flag = undefined;
         this.currentContext.currInstruction = instr.next;
         return true;
       }
       case Operation.Move: {
-        const srcCell = this.data.read(instr.src.toGlobal(this.origin));
+        const srcCell = this.read(instr.src);
         assert(srcCell !== undefined);
-        this.data.write(instr.dst.toGlobal(this.origin), { ...srcCell });
+        this.write(instr.dst, { ...srcCell });
         this.flag = undefined;
         this.currentContext.currInstruction = instr.next;
         return true;
@@ -72,11 +100,11 @@ export class VirtualMachine {
       case Operation.Multiply:
       case Operation.Divide:
       case Operation.Modulo: {
-        const leftCell = this.data.read(instr.dst.toGlobal(this.origin));
+        const leftCell = this.read(instr.dst);
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.src.toGlobal(this.origin));
+        const rightCell = this.read(instr.src);
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
-        this.data.write(instr.dst.toGlobal(this.origin), {
+        this.write(instr.dst, {
           kind: CellKind.Data,
           data:
             instr.kind === Operation.Add
@@ -94,9 +122,9 @@ export class VirtualMachine {
         return true;
       }
       case Operation.BranchIfEqual: {
-        const leftCell = this.data.read(instr.left.toGlobal(this.origin));
+        const leftCell = this.read(instr.left);
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.right.toGlobal(this.origin));
+        const rightCell = this.read(instr.right);
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         if (leftCell.data === rightCell.data) {
           this.flag = true;
@@ -108,9 +136,9 @@ export class VirtualMachine {
         return true;
       }
       case Operation.BranchIfLessThan: {
-        const leftCell = this.data.read(instr.left.toGlobal(this.origin));
+        const leftCell = this.read(instr.left);
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.right.toGlobal(this.origin));
+        const rightCell = this.read(instr.right);
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         if (leftCell.data < rightCell.data) {
           this.flag = true;
@@ -127,7 +155,7 @@ export class VirtualMachine {
           AddressMode.Global,
           instr.target.coords,
         );
-        let fnCell = this.data.read(fnAddress);
+        let fnCell = this.read(fnAddress);
         if (!fnCell || fnCell.kind !== CellKind.Code) {
           fnCell = {
             kind: CellKind.Code,
@@ -135,7 +163,7 @@ export class VirtualMachine {
               instr: { kind: Operation.Nop },
             },
           };
-          this.data.write(fnAddress, fnCell);
+          this.write(fnAddress, fnCell);
         }
         assert(fnCell.kind === CellKind.Code);
         this.flag = undefined;

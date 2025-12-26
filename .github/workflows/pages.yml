@@ -26,7 +26,7 @@ jobs:
       - run: npm ci
       - env:
           TOKEN: ${{ secrets.TOKEN }}
-        run: npm run build
+        run: npm run build -- --base-href /looper/
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3

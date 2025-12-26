@@ -89,7 +89,7 @@ export class LooperComponent {
     const flag = this.looper.vm.flag;
     const startColor = flag === true ? '#77ff77' : flag === false ? '#ff7777' : 'transparent';
     const endColor = this.paused ? '#cccccc' : 'transparent';
-    const horizontalColor = `linear-gradient(270deg, ${startColor} 0%, transparent 30% 70%, ${endColor} 100%)`;
+    const horizontalColor = `linear-gradient(270deg, ${startColor} 0%, transparent 40% 60%, ${endColor} 100%)`;
     const modeColor = this.looper.mode === AddressMode.Global ? '#cccccc' : 'transparent';
     const verticalColor = `linear-gradient(180deg, ${modeColor} 0%, transparent 30%)`;
     return `${horizontalColor}, ${verticalColor}, #333333`;

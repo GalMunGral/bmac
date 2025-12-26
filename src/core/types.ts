@@ -1,6 +1,11 @@
 export enum AddressKind {
-  DirectAddress = 'DA',
-  IndirectAddress = 'IA',
+  DirectAddress = 'Direct',
+  IndirectAddress = 'Indirect',
+}
+
+export enum AddressMode {
+  Global = 'Global',
+  Local = 'Local',
 }
 
 export class Coords2D {
@@ -25,11 +30,24 @@ export class Coords2D {
 export class Address {
   constructor(
     public kind: AddressKind,
+    public mode: AddressMode,
     public coords: Coords2D,
   ) {}
 
-  public offset(origin: Coords2D) {
-    return new Address(this.kind, this.coords.add(origin));
+  public toLocal(origin: Coords2D) {
+    return new Address(
+      this.kind,
+      AddressMode.Local,
+      this.mode === AddressMode.Local ? this.coords : this.coords.sub(origin),
+    );
+  }
+
+  public toGlobal(origin: Coords2D) {
+    return new Address(
+      this.kind,
+      AddressMode.Global,
+      this.mode === AddressMode.Global ? this.coords : this.coords.add(origin),
+    );
   }
 }
 
@@ -57,19 +75,19 @@ export interface CodeCell {
 export type Cell = AddressCell | DataCell | CodeCell;
 
 export enum Operation {
-  Nop = 'NOP',
-  Pointer = 'PTR',
-  PointerIncrement = 'INC',
-  Move = 'MOV',
-  Add = 'ADD',
-  Subtract = 'SUB',
-  Multiply = 'MUL',
-  Divide = 'DIV',
-  Modulo = 'MOD',
-  BranchIfEqual = 'BEQ',
-  BranchIfLessThan = 'BLT',
-  BranchWithLink = 'BL',
-  Return = 'RET',
+  Nop = '_',
+  Pointer = '&',
+  PointerIncrement = '&++',
+  Move = '->',
+  Add = '+',
+  Subtract = '-',
+  Multiply = '*',
+  Divide = '/',
+  Modulo = '%',
+  BranchIfEqual = '==',
+  BranchIfLessThan = '<',
+  BranchWithLink = 'call',
+  Return = 'return',
 }
 
 export interface NopInstruction {
@@ -123,5 +141,6 @@ export interface InstructionRef {
 
 export interface ExecutionContext {
   origin: Coords2D;
-  nextInstruction: InstructionRef;
+  prevInstruction: InstructionRef;
+  currInstruction: InstructionRef;
 }

@@ -1,44 +1,96 @@
 import { VirtualMachine } from './VirtualMachine';
-import { Address, AddressKind, CellKind, Coords2D, Instruction, Operation } from './types';
+import {
+  Address,
+  AddressKind,
+  AddressMode,
+  CellKind,
+  Coords2D,
+  Instruction,
+  Operation,
+} from './types';
 import { assert } from './utils';
 
 export class Looper {
   public playing = true;
   public clockCycle = 100;
-  public operationOptions: Operation[] = Object.values(Operation);
 
+  public mode: AddressMode = AddressMode.Local;
   public srcAddr: Address | null = null;
   public dstAddr: Address | null = null;
 
   constructor(public vm: VirtualMachine) {}
 
-  public play() {
-    this.playing = true;
-  }
-
-  public pause() {
-    this.playing = false;
-  }
-
   private replace(instr: Instruction) {
-    this.vm.currentContext.nextInstruction.instr = instr;
+    this.vm.currentContext.currInstruction.instr = instr;
   }
 
-  public selectCellAt(i: number, j: number) {
-    const absoluteAddr = new Address(AddressKind.DirectAddress, new Coords2D(i, j));
-    const cell = this.vm.data.read(absoluteAddr);
-    const relativeAddr: Address = new Address(
-      cell?.kind === CellKind.Address ? AddressKind.IndirectAddress : AddressKind.DirectAddress,
-      new Coords2D(i, j).sub(this.vm.origin),
-    );
-    if (!this.srcAddr) {
-      this.srcAddr = relativeAddr;
-    } else if (!this.dstAddr) {
-      this.dstAddr = relativeAddr;
-    } else {
-      this.srcAddr = this.dstAddr;
-      this.dstAddr = relativeAddr;
+  public get prevSrc(): Address | null {
+    const instr = this.vm.currentContext.prevInstruction.instr;
+    switch (instr.kind) {
+      case Operation.Pointer:
+      case Operation.PointerIncrement:
+      case Operation.Move:
+      case Operation.Add:
+      case Operation.Subtract:
+      case Operation.Multiply:
+      case Operation.Divide:
+      case Operation.Modulo:
+        return instr.src;
+      case Operation.BranchIfEqual:
+      case Operation.BranchIfLessThan:
+        return instr.left;
+      case Operation.BranchWithLink:
+        return instr.target;
+      case Operation.Return:
+      case Operation.Nop:
+        return null;
     }
+  }
+
+  public get prevDst(): Address | null {
+    const instr = this.vm.currentContext.prevInstruction.instr;
+    switch (instr.kind) {
+      case Operation.Pointer:
+      case Operation.PointerIncrement:
+      case Operation.Move:
+      case Operation.Add:
+      case Operation.Subtract:
+      case Operation.Multiply:
+      case Operation.Divide:
+      case Operation.Modulo:
+        return instr.dst;
+      case Operation.BranchIfEqual:
+      case Operation.BranchIfLessThan:
+        return instr.right;
+      case Operation.BranchWithLink:
+        return instr.origin;
+      case Operation.Return:
+      case Operation.Nop:
+        return null;
+    }
+  }
+
+  public toAddress(i: number, j: number) {
+    const cell = this.vm.data.readAt(new Coords2D(i, j));
+    const globalAddr = new Address(
+      cell?.kind === CellKind.Address ? AddressKind.IndirectAddress : AddressKind.DirectAddress,
+      AddressMode.Global,
+      new Coords2D(i, j),
+    );
+    return this.mode === AddressMode.Global ? globalAddr : globalAddr.toLocal(this.vm.origin);
+  }
+
+  public reset() {
+    this.srcAddr = null;
+    this.dstAddr = null;
+  }
+
+  public setSrc(i: number, j: number) {
+    this.srcAddr = this.toAddress(i, j);
+  }
+
+  public setDst(i: number, j: number) {
+    this.dstAddr = this.toAddress(i, j);
   }
 
   public selectOperation(kind: Operation) {
@@ -55,6 +107,9 @@ export class Looper {
       case Operation.Modulo: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
+        const srcCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
+        const dstCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
+
         this.replace({
           kind,
           src: this.srcAddr,
@@ -66,7 +121,7 @@ export class Looper {
       case Operation.PointerIncrement: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const dataCell = this.vm.data.read(this.srcAddr.offset(this.vm.origin));
+        const dataCell = this.vm.data.read(this.srcAddr.toGlobal(this.vm.origin));
         assert(dataCell !== undefined && dataCell.kind === CellKind.Data);
         assert(this.dstAddr.kind === AddressKind.IndirectAddress);
         this.replace({
@@ -95,7 +150,7 @@ export class Looper {
         assert(this.dstAddr !== null);
         this.replace({
           kind,
-          target: this.srcAddr.offset(this.vm.origin),
+          target: this.srcAddr.toGlobal(this.vm.origin),
           origin: this.dstAddr,
           link: { instr: { kind: Operation.Nop } },
         });

@@ -1,4 +1,4 @@
-import { Address, AddressKind, Cell, CellKind } from './types';
+import { Address, AddressKind, AddressMode, Cell, CellKind, Coords2D } from './types';
 import { assert } from './utils';
 
 export class Memory2D {
@@ -10,42 +10,44 @@ export class Memory2D {
     ],
   ];
 
-  public readAt(i: number, j: number): Cell | undefined {
-    if (!this.grid[i]) {
-      this.grid[i] = [];
+  public readAt(coords: Coords2D): Cell | undefined {
+    if (!this.grid[coords.i]) {
+      this.grid[coords.i] = [];
     }
-    return this.grid[i][j];
+    return this.grid[coords.i]![coords.j];
   }
 
-  public writeAt(i: number, j: number, cell: Cell): void {
-    if (!this.grid[i]) {
-      this.grid[i] = [];
+  public writeAt(coords: Coords2D, cell: Cell): void {
+    if (!this.grid[coords.i]) {
+      this.grid[coords.i] = [];
     }
-    this.grid[i][j] = cell;
+    this.grid[coords.i]![coords.j] = cell;
   }
 
   public read(addr: Address): Cell | undefined {
+    assert(addr.mode === AddressMode.Global);
     switch (addr.kind) {
       case AddressKind.DirectAddress: {
-        return this.readAt(addr.coords.i, addr.coords.j);
+        return this.readAt(addr.coords);
       }
       case AddressKind.IndirectAddress: {
-        const c = this.readAt(addr.coords.i, addr.coords.j);
+        const c = this.readAt(addr.coords);
         assert(c !== undefined && c.kind === CellKind.Address);
-        return this.readAt(c.coords.i, c.coords.j);
+        return this.readAt(c.coords);
       }
     }
   }
 
   public write(addr: Address, cell: Cell): void {
+    assert(addr.mode === AddressMode.Global);
     switch (addr.kind) {
       case AddressKind.DirectAddress: {
-        return this.writeAt(addr.coords.i, addr.coords.j, cell);
+        return this.writeAt(addr.coords, cell);
       }
       case AddressKind.IndirectAddress: {
-        const c = this.readAt(addr.coords.i, addr.coords.j);
+        const c = this.readAt(addr.coords);
         assert(c !== undefined && c.kind === CellKind.Address);
-        return this.writeAt(c.coords.i, c.coords.j, cell);
+        return this.writeAt(c.coords, cell);
       }
     }
   }

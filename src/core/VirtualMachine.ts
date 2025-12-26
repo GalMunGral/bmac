@@ -1,4 +1,12 @@
-import { Address, AddressKind, CellKind, Coords2D, ExecutionContext, Operation } from './types';
+import {
+  Address,
+  AddressKind,
+  AddressMode,
+  CellKind,
+  Coords2D,
+  ExecutionContext,
+  Operation,
+} from './types';
 import { assert } from './utils';
 import { Memory2D } from './Memory2D';
 
@@ -8,7 +16,8 @@ export class VirtualMachine {
 
   public contexts = new Array<ExecutionContext>({
     origin: new Coords2D(),
-    nextInstruction: { instr: { kind: Operation.Nop } },
+    prevInstruction: { instr: { kind: Operation.Nop } },
+    currInstruction: { instr: { kind: Operation.Nop } },
   });
 
   public get currentContext() {
@@ -21,52 +30,53 @@ export class VirtualMachine {
     return this.currentContext.origin;
   }
 
-  public execute() {
-    const instr = this.currentContext.nextInstruction.instr;
+  public execute(): boolean {
+    const instr = this.currentContext.currInstruction.instr;
+    this.currentContext.prevInstruction = this.currentContext.currInstruction;
     switch (instr.kind) {
       case Operation.Nop: {
-        break;
+        return false;
       }
       case Operation.Pointer: {
-        this.data.write(instr.dst.offset(this.origin), {
+        this.data.writeAt(this.origin.add(instr.dst.coords), {
           kind: CellKind.Address,
           coords: instr.src.coords, // relative
         });
         this.flag = undefined;
-        this.currentContext.nextInstruction = instr.next;
-        break;
+        this.currentContext.currInstruction = instr.next;
+        return true;
       }
       case Operation.PointerIncrement: {
-        const addrCell = this.data.read(instr.dst.offset(this.origin));
+        const addrCell = this.data.readAt(this.origin.add(instr.dst.coords));
         assert(addrCell !== undefined && addrCell.kind === CellKind.Address);
-        const dataCell = this.data.read(instr.src.offset(this.origin));
+        const dataCell = this.data.read(instr.src.toGlobal(this.origin));
         assert(dataCell !== undefined && dataCell.kind === CellKind.Data);
-        this.data.write(instr.dst.offset(this.origin), {
+        this.data.writeAt(this.origin.add(instr.dst.coords), {
           kind: CellKind.Address,
           coords: new Coords2D(addrCell.coords.i, addrCell.coords.j + Math.floor(dataCell.data)),
         });
         this.flag = undefined;
-        this.currentContext.nextInstruction = instr.next;
-        break;
+        this.currentContext.currInstruction = instr.next;
+        return true;
       }
       case Operation.Move: {
-        const srcCell = this.data.read(instr.src.offset(this.origin));
+        const srcCell = this.data.read(instr.src.toGlobal(this.origin));
         assert(srcCell !== undefined);
-        this.data.write(instr.dst.offset(this.origin), { ...srcCell });
+        this.data.write(instr.dst.toGlobal(this.origin), { ...srcCell });
         this.flag = undefined;
-        this.currentContext.nextInstruction = instr.next;
-        break;
+        this.currentContext.currInstruction = instr.next;
+        return true;
       }
       case Operation.Add:
       case Operation.Subtract:
       case Operation.Multiply:
       case Operation.Divide:
       case Operation.Modulo: {
-        const leftCell = this.data.read(instr.dst.offset(this.origin));
+        const leftCell = this.data.read(instr.dst.toGlobal(this.origin));
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.src.offset(this.origin));
+        const rightCell = this.data.read(instr.src.toGlobal(this.origin));
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
-        this.data.write(instr.dst.offset(this.origin), {
+        this.data.write(instr.dst.toGlobal(this.origin), {
           kind: CellKind.Data,
           data:
             instr.kind === Operation.Add
@@ -80,41 +90,45 @@ export class VirtualMachine {
                     : leftCell.data % Math.floor(rightCell.data),
         });
         this.flag = undefined;
-        this.currentContext.nextInstruction = instr.next;
-        break;
+        this.currentContext.currInstruction = instr.next;
+        return true;
       }
       case Operation.BranchIfEqual: {
-        const leftCell = this.data.read(instr.left.offset(this.origin));
+        const leftCell = this.data.read(instr.left.toGlobal(this.origin));
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.right.offset(this.origin));
+        const rightCell = this.data.read(instr.right.toGlobal(this.origin));
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         if (leftCell.data === rightCell.data) {
           this.flag = true;
-          this.currentContext.nextInstruction = instr.ifTrue;
+          this.currentContext.currInstruction = instr.ifTrue;
         } else {
           this.flag = false;
-          this.currentContext.nextInstruction = instr.ifFalse;
+          this.currentContext.currInstruction = instr.ifFalse;
         }
-        break;
+        return true;
       }
       case Operation.BranchIfLessThan: {
-        const leftCell = this.data.read(instr.left.offset(this.origin));
+        const leftCell = this.data.read(instr.left.toGlobal(this.origin));
         assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        const rightCell = this.data.read(instr.right.offset(this.origin));
+        const rightCell = this.data.read(instr.right.toGlobal(this.origin));
         assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         if (leftCell.data < rightCell.data) {
           this.flag = true;
-          this.currentContext.nextInstruction = instr.ifTrue;
+          this.currentContext.currInstruction = instr.ifTrue;
         } else {
           this.flag = false;
-          this.currentContext.nextInstruction = instr.ifFalse;
+          this.currentContext.currInstruction = instr.ifFalse;
         }
-        break;
+        return true;
       }
       case Operation.BranchWithLink: {
-        const fnAddress = new Address(AddressKind.DirectAddress, instr.target.coords);
+        const fnAddress = new Address(
+          AddressKind.DirectAddress,
+          AddressMode.Global,
+          instr.target.coords,
+        );
         let fnCell = this.data.read(fnAddress);
-        if (!fnCell) {
+        if (!fnCell || fnCell.kind !== CellKind.Code) {
           fnCell = {
             kind: CellKind.Code,
             entry: {
@@ -125,18 +139,21 @@ export class VirtualMachine {
         }
         assert(fnCell.kind === CellKind.Code);
         this.flag = undefined;
-        this.currentContext.nextInstruction = instr.link;
+        this.currentContext.currInstruction = instr.link;
         this.contexts.push({
-          nextInstruction: fnCell.entry,
+          prevInstruction: { instr: { kind: Operation.Nop } },
+          currInstruction: fnCell.entry,
           origin: instr.origin.coords.add(this.origin),
         });
-        break;
+        return true;
       }
       case Operation.Return: {
         this.flag = undefined;
         this.contexts.pop();
-        break;
+        return true;
       }
+      default:
+        return false;
     }
   }
 }

@@ -1,6 +1,7 @@
 export function assert(condition: boolean): asserts condition {
   if (!condition) {
-    alert('assertion failed');
-    throw new Error('assertion failed');
+    const err = new Error('assertion failed');
+    alert(err.stack);
+    throw err;
   }
 }

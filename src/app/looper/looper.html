@@ -1,5 +1,5 @@
 <div class="w-screen h-screen overflow-scroll select-none"
-     [style.background]="statusColor"
+     [style.background]="statusIndicators"
 >
   <table class="table-fixed w-0"
          (click)="this.looper.reset()"
@@ -8,29 +8,25 @@
       <tr>
         @for (_ of row; let j = $index; track j) {
           <td
-            class="w-[80px] h-[24px] border-2 border-[transparent] text-[14px] text-center transition-all [&:not(:has(*:hover)):hover]:bg-gray-700! [&:not(:has(*:hover)):active]:bg-gray-400! font-bold relative"
+            class="w-[80px] h-[24px] relative border-1 border-transparent text-[12px] text-center font-black
+            [&:not(:has(*:hover)):hover]:bg-gray-700! [&:not(:has(*:hover)):active]:bg-gray-400!"
             draggable="true"
             [style.background-color]="cellColorAt(i, j)"
             [style.color]="textColorAt(i, j)"
-            (dragstart)="looper.setSrc(i, j)"
+            (dragstart)="onDragStart(i, j)"
             (dragover)="$event.preventDefault()"
-            (drop)="looper.setDst(i, j)"
+            (drop)="onDrop(i, j)"
           >
             {{ dataAt(i, j) }}
             @if (paused && isDst(i, j)) {
-              <p-card class="absolute left-[50px] top-[50px] z-10">
-                <div class="flex flex-row gap-[5px]">
-                  @for (group of operations; track group) {
-                    <div class="w-[80px] flex-none flex flex-col gap-[5px]">
-                      @for (operation of group; track operation) {
-                        <p-button [label]="operation" severity="primary" variant="outlined"
-                                  (click)="selectOperation(operation); $event.stopPropagation()" class="w-full"
-                                  styleClass="w-full"/>
-                      }
-                    </div>
-                  }
-                </div>
-              </p-card>
+              @for (operation of operations; track operation; let idx = $index) {
+                <p-button [icon]="iconForOperation(operation)" [rounded]="true" severity="secondary" size="large"
+                          draggable="false"
+                          class="absolute left-1/2 top-1/2 z-10 origin-top-left"
+                          [style.transform]="transformForButtonAt(idx)"
+                          (click)="recordAndPlayImmediately(operation); $event.stopPropagation()"
+                />
+              }
             }
           </td>
         }

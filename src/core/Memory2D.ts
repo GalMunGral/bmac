@@ -1,11 +1,11 @@
-import { Cell, CellKind, IVec2 } from './types';
+import { Cell, CellKind, IVec2, Operation } from './types';
 
 export class Memory2D {
   private grid: Array<Array<Cell>> = [
     [
+      { kind: CellKind.Code, entry: { instr: { kind: Operation.Nop } } },
       { kind: CellKind.Data, data: 0 },
       { kind: CellKind.Data, data: 1 },
-      { kind: CellKind.Data, data: 10 },
     ],
   ];
 

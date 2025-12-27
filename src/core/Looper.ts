@@ -24,52 +24,6 @@ export class Looper {
     this.vm.currentContext.currInstruction.instr = instr;
   }
 
-  public get prevSrc(): Address | null {
-    const instr = this.vm.currentContext.prevInstruction.instr;
-    switch (instr.kind) {
-      case Operation.Pointer:
-      case Operation.PointerIncrement:
-      case Operation.Move:
-      case Operation.Add:
-      case Operation.Subtract:
-      case Operation.Multiply:
-      case Operation.Divide:
-      case Operation.Modulo:
-        return instr.src;
-      case Operation.BranchIfEqual:
-      case Operation.BranchIfLessThan:
-        return instr.left;
-      case Operation.BranchWithLink:
-        return instr.target;
-      case Operation.Return:
-      case Operation.Nop:
-        return null;
-    }
-  }
-
-  public get prevDst(): Address | null {
-    const instr = this.vm.currentContext.prevInstruction.instr;
-    switch (instr.kind) {
-      case Operation.Pointer:
-      case Operation.PointerIncrement:
-      case Operation.Move:
-      case Operation.Add:
-      case Operation.Subtract:
-      case Operation.Multiply:
-      case Operation.Divide:
-      case Operation.Modulo:
-        return instr.dst;
-      case Operation.BranchIfEqual:
-      case Operation.BranchIfLessThan:
-        return instr.right;
-      case Operation.BranchWithLink:
-        return instr.origin;
-      case Operation.Return:
-      case Operation.Nop:
-        return null;
-    }
-  }
-
   public toAddress(i: number, j: number) {
     const cell = this.vm.data.readAt(new IVec2(i, j));
     const globalAddr = new Address(
@@ -77,7 +31,9 @@ export class Looper {
       AddressMode.Global,
       new IVec2(i, j),
     );
-    return this.mode === AddressMode.Global ? globalAddr : globalAddr.toLocal(this.vm.origin);
+    return this.mode === AddressMode.Global
+      ? globalAddr
+      : globalAddr.toLocal(this.vm.currentOrigin);
   }
 
   public reset() {
@@ -93,13 +49,39 @@ export class Looper {
     this.dstAddr = this.toAddress(i, j);
   }
 
-  public selectOperation(kind: Operation) {
+  public record(kind: Operation) {
     switch (kind) {
       case Operation.Nop: {
         break;
       }
-      case Operation.Pointer:
-      case Operation.Move:
+      case Operation.Pointer: {
+        assert(this.srcAddr !== null);
+        assert(this.dstAddr !== null);
+        const srcCell = this.vm.read(this.srcAddr);
+        const dstCell = this.vm.read(this.dstAddr);
+        assert(srcCell !== undefined && srcCell.kind === CellKind.Data);
+        this.replace({
+          kind,
+          src: this.srcAddr,
+          dst: this.dstAddr,
+          next: { instr: { kind: Operation.Nop } },
+        });
+        break;
+      }
+      case Operation.Move: {
+        assert(this.srcAddr !== null);
+        assert(this.dstAddr !== null);
+        const srcCell = this.vm.read(this.srcAddr);
+        const dstCell = this.vm.read(this.dstAddr);
+        assert(srcCell !== undefined);
+        this.replace({
+          kind,
+          src: this.srcAddr,
+          dst: this.dstAddr,
+          next: { instr: { kind: Operation.Nop } },
+        });
+        break;
+      }
       case Operation.Add:
       case Operation.Subtract:
       case Operation.Multiply:
@@ -108,7 +90,9 @@ export class Looper {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
         const srcCell = this.vm.read(this.srcAddr);
-        const dstCell = this.vm.read(this.srcAddr);
+        const dstCell = this.vm.read(this.dstAddr);
+        assert(srcCell !== undefined && srcCell.kind === CellKind.Data);
+        assert(dstCell !== undefined && dstCell.kind === CellKind.Data);
         this.replace({
           kind,
           src: this.srcAddr,
@@ -135,6 +119,10 @@ export class Looper {
       case Operation.BranchIfLessThan: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
+        const leftCell = this.vm.read(this.srcAddr);
+        const rightCell = this.vm.read(this.dstAddr);
+        assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
+        assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         this.replace({
           kind,
           left: this.srcAddr,
@@ -149,7 +137,7 @@ export class Looper {
         assert(this.dstAddr !== null);
         this.replace({
           kind,
-          target: this.srcAddr.toGlobal(this.vm.origin),
+          target: this.srcAddr.toGlobal(this.vm.currentOrigin),
           origin: this.dstAddr,
           link: { instr: { kind: Operation.Nop } },
         });

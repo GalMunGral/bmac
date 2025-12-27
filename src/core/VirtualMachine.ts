@@ -4,6 +4,7 @@ import {
   AddressMode,
   Cell,
   CellKind,
+  CodeCell,
   ExecutionContext,
   IVec2,
   Operation,
@@ -16,9 +17,10 @@ export class VirtualMachine {
   public flag: boolean | undefined = undefined;
 
   public contexts = new Array<ExecutionContext>({
-    origin: new IVec2(),
+    target: new IVec2(0, 0),
+    origin: new IVec2(0, 0),
     prevInstruction: { instr: { kind: Operation.Nop } },
-    currInstruction: { instr: { kind: Operation.Nop } },
+    currInstruction: (this.data.readAt(new IVec2(0, 0)) as CodeCell).entry,
   });
 
   public get currentContext() {
@@ -27,19 +29,23 @@ export class VirtualMachine {
     return context;
   }
 
-  public get origin(): IVec2 {
+  public get currentOrigin(): IVec2 {
     return this.currentContext.origin;
+  }
+
+  public get currentTarget(): IVec2 {
+    return this.currentContext.target;
   }
 
   public read(addr: Address): Cell | undefined {
     switch (addr.kind) {
       case AddressKind.DirectAddress: {
-        return this.data.readAt(addr.toGlobal(this.origin).coords);
+        return this.data.readAt(addr.toGlobal(this.currentOrigin).coords);
       }
       case AddressKind.IndirectAddress: {
-        const c = this.data.readAt(addr.toGlobal(this.origin).coords);
+        const c = this.data.readAt(addr.toGlobal(this.currentOrigin).coords);
         assert(c !== undefined && c.kind === CellKind.Address);
-        return this.data.readAt(c.addr.toGlobal(this.origin).coords);
+        return this.data.readAt(c.addr.toGlobal(this.currentOrigin).coords);
       }
     }
   }
@@ -47,12 +53,12 @@ export class VirtualMachine {
   public write(addr: Address, cell: Cell): void {
     switch (addr.kind) {
       case AddressKind.DirectAddress: {
-        return this.data.writeAt(addr.toGlobal(this.origin).coords, cell);
+        return this.data.writeAt(addr.toGlobal(this.currentOrigin).coords, cell);
       }
       case AddressKind.IndirectAddress: {
-        const c = this.data.readAt(addr.toGlobal(this.origin).coords);
+        const c = this.data.readAt(addr.toGlobal(this.currentOrigin).coords);
         assert(c !== undefined && c.kind === CellKind.Address);
-        return this.data.writeAt(c.addr.toGlobal(this.origin).coords, cell);
+        return this.data.writeAt(c.addr.toGlobal(this.currentOrigin).coords, cell);
       }
     }
   }
@@ -65,16 +71,16 @@ export class VirtualMachine {
         return false;
       }
       case Operation.Pointer: {
-        this.data.writeAt(this.origin.add(instr.dst.coords), {
+        this.data.writeAt(this.currentOrigin.add(instr.dst.coords), {
           kind: CellKind.Address,
-          addr: instr.src,
+          addr: instr.src.toGlobal(this.currentOrigin),
         });
         this.flag = undefined;
         this.currentContext.currInstruction = instr.next;
         return true;
       }
       case Operation.PointerIncrement: {
-        const dstGlobalCoords = instr.dst.toGlobal(this.origin).coords;
+        const dstGlobalCoords = instr.dst.toGlobal(this.currentOrigin).coords;
         const addrCell = this.data.readAt(dstGlobalCoords);
         assert(addrCell !== undefined && addrCell.kind === CellKind.Address);
         const dataCell = this.read(instr.src);
@@ -150,12 +156,12 @@ export class VirtualMachine {
         return true;
       }
       case Operation.BranchWithLink: {
-        const fnAddress = new Address(
+        const globalFuncAddress = new Address(
           AddressKind.DirectAddress,
           AddressMode.Global,
           instr.target.coords,
         );
-        let fnCell = this.read(fnAddress);
+        let fnCell = this.read(globalFuncAddress);
         if (!fnCell || fnCell.kind !== CellKind.Code) {
           fnCell = {
             kind: CellKind.Code,
@@ -163,15 +169,16 @@ export class VirtualMachine {
               instr: { kind: Operation.Nop },
             },
           };
-          this.write(fnAddress, fnCell);
+          this.write(globalFuncAddress, fnCell);
         }
         assert(fnCell.kind === CellKind.Code);
         this.flag = undefined;
         this.currentContext.currInstruction = instr.link;
         this.contexts.push({
+          target: globalFuncAddress.coords,
+          origin: instr.origin.coords.add(this.currentOrigin),
           prevInstruction: { instr: { kind: Operation.Nop } },
           currInstruction: fnCell.entry,
-          origin: instr.origin.coords.add(this.origin),
         });
         return true;
       }

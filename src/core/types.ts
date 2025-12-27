@@ -144,6 +144,7 @@ export interface InstructionRef {
 }
 
 export interface ExecutionContext {
+  target: IVec2;
   origin: IVec2;
   prevInstruction: InstructionRef;
   currInstruction: InstructionRef;

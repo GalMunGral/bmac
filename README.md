@@ -3,7 +3,7 @@
 A macro (as in Excel macro, not C or Lisp macro) recorder, with conditional buns and recursive patties.
 
 ## Inspiration from ~~culinary~~ computer science:
-- Pygmalion: A Creative Programming Environment (Smith, 1975) - 
+- Pygmalion: A Creative Programming Environment (Smith, 1975)
   - https://apps.dtic.mil/sti/tr/pdf/ADA016811.pdf
   - https://acypher.com/wwid/Chapters/01Pygmalion.html
 - Recursive Functions of Symbolic Expressions and Their Computation by Machine, Part I (McCarthy, 1960)

@@ -10,7 +10,7 @@ import {
 } from './types';
 import { assert } from './utils';
 
-export class Looper {
+export class MacroRecorder {
   public playing = true;
   public clockCycle = 25;
 

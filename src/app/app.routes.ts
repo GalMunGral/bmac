@@ -1,9 +1,9 @@
 import { Routes } from '@angular/router';
-import { LooperComponent } from './looper/looper';
+import { BMAC } from './bmac/bmac';
 
 export const routes: Routes = [
   {
     path: '',
-    component: LooperComponent,
+    component: BMAC,
   },
 ];

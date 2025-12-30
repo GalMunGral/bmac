@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, HostListener, inject } from '@angular/core';
-import { Looper } from '../../core/Looper';
+import { MacroRecorder } from '../../core/MacroRecorder';
 import { VirtualMachine } from '../../core/VirtualMachine';
 import { ButtonModule } from 'primeng/button';
 import {
@@ -13,20 +13,20 @@ import {
 } from '../../core/types';
 
 @Component({
-  selector: 'app-looper',
+  selector: 'app-bmac',
   imports: [ButtonModule],
-  templateUrl: './looper.html',
-  styleUrl: './looper.css',
+  templateUrl: './bmac.html',
+  styleUrl: './bmac.css',
 })
-export class LooperComponent {
+export class BMAC {
   readonly vm = new VirtualMachine();
-  readonly looper = new Looper(this.vm);
+  readonly recorder = new MacroRecorder(this.vm);
 
   @HostListener('window:keydown', ['$event.shiftKey'])
   @HostListener('window:keyup', ['$event.shiftKey'])
   @HostListener('window:drag', ['$event.shiftKey'])
   toggleAddressMode(shiftKeyPressed: boolean) {
-    this.looper.mode = shiftKeyPressed ? AddressMode.Global : AddressMode.Local;
+    this.recorder.mode = shiftKeyPressed ? AddressMode.Global : AddressMode.Local;
   }
 
   readonly operations: Operation[] = [
@@ -53,14 +53,14 @@ export class LooperComponent {
 
   constructor() {
     const tick = () => {
-      if (this.looper.playing) {
+      if (this.recorder.playing) {
         if (this.vm.execute()) {
           this.cd.markForCheck();
         }
       }
-      setTimeout(tick, this.looper.clockCycle);
+      setTimeout(tick, this.recorder.clockCycle);
     };
-    setTimeout(tick, this.looper.clockCycle);
+    setTimeout(tick, this.recorder.clockCycle);
   }
 
   get paused() {
@@ -114,7 +114,7 @@ export class LooperComponent {
   isSrc(i: number, j: number) {
     const o = this.vm.currentOrigin;
     const p = new IVec2(i, j);
-    return Boolean(this.looper.srcAddr?.toGlobal(o).coords.equals(p));
+    return Boolean(this.recorder.srcAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastSrc(i: number, j: number) {
@@ -128,7 +128,7 @@ export class LooperComponent {
   isDst(i: number, j: number) {
     const o = this.vm.currentOrigin;
     const p = new IVec2(i, j);
-    return Boolean(this.looper.dstAddr?.toGlobal(o).coords.equals(p));
+    return Boolean(this.recorder.dstAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastDst(i: number, j: number) {
@@ -160,7 +160,7 @@ export class LooperComponent {
 
   get usingGlobalAddressMode() {
     return (
-      this.looper.mode === AddressMode.Global ||
+      this.recorder.mode === AddressMode.Global ||
       this.getInstrSrc(this.vm.currentContext.currInstruction.instr)?.mode == AddressMode.Global ||
       this.getInstrDst(this.vm.currentContext.currInstruction.instr)?.mode == AddressMode.Global
     );
@@ -258,27 +258,27 @@ export class LooperComponent {
   }
 
   onDragStart(i: number, j: number) {
-    this.looper.setSrc(i, j);
+    this.recorder.setSrc(i, j);
   }
 
   onDrop(i: number, j: number) {
-    this.looper.setDst(i, j);
-    if (!this.looper.srcAddr || !this.looper.dstAddr) {
+    this.recorder.setDst(i, j);
+    if (!this.recorder.srcAddr || !this.recorder.dstAddr) {
       return;
     }
     // shortcuts
-    if (this.vm.read(this.looper.srcAddr)?.kind === CellKind.Code) {
+    if (this.vm.read(this.recorder.srcAddr)?.kind === CellKind.Code) {
       // this.recordAndPlayImmediately(Operation.BranchWithLink);
     } else if (
-      this.looper.srcAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentOrigin) &&
-      this.looper.dstAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentTarget)
+      this.recorder.srcAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentOrigin) &&
+      this.recorder.dstAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentTarget)
     ) {
       this.recordAndPlayImmediately(Operation.Return);
     }
   }
 
   recordAndPlayImmediately(operation: Operation) {
-    this.looper.record(operation);
+    this.recorder.record(operation);
     if (this.vm.execute()) {
       this.cd.markForCheck();
     }

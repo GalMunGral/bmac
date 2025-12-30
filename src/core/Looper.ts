@@ -12,7 +12,7 @@ import { assert } from './utils';
 
 export class Looper {
   public playing = true;
-  public clockCycle = 50;
+  public clockCycle = 100;
 
   public mode: AddressMode = AddressMode.Local;
   public srcAddr: Address | null = null;

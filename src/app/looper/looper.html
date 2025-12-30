@@ -6,19 +6,17 @@
     @for (row of indices; let i = $index; track i) {
       <div class="flex flex-row gap-0.5">
         @for (_ of row; let j = $index; track j) {
-          <div
-            class="flex-none w-[40px] h-[40px] relative
-            flex items-center justify-center
-            [&:not(:has(*:hover)):hover]:bg-gray-400!
-            text-[14px] text-center font-black"
-            draggable="true"
-            [style.background-color]="cellColorAt(i, j)"
-            [style.color]="textColorAt(i, j)"
-            (dragstart)="onDragStart(i, j)"
-            (dragover)="$event.preventDefault()"
-            (drop)="onDrop(i, j)"
-          >
-            {{ dataAt(i, j) }}
+          <div class="relative" (drop)="onDrop(i, j)">
+            <div
+              class="flex-none w-[40px] h-[40px] flex items-center justify-center text-[16x] text-center font-bold
+            [&:not(:has(*:hover)):hover]:bg-gray-400!"
+              draggable="true"
+              [innerHTML]="CellContentAt(i, j)"
+              [style.background-color]="cellColorAt(i, j)"
+              [style.color]="textColorAt(i, j)"
+              (dragstart)="onDragStart(i, j)"
+              (dragover)="$event.preventDefault()"
+            ></div>
             @if (paused && isDst(i, j)) {
               @for (operation of operations; track operation; let idx = $index) {
                 <p-button [icon]="iconForOperation(operation)" [rounded]="true" severity="secondary" size="large"

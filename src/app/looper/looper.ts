@@ -147,13 +147,13 @@ export class LooperComponent {
   get statusIndicators() {
     const flag = this.vm.flag;
     const flagBitColor = flag === true ? '#77ff77' : flag === false ? '#ff7777' : 'transparent';
-    const flagBitIndicator = `radial-gradient(circle at 100%, ${flagBitColor} 0%, transparent 100%)`;
+    const flagBitIndicator = `radial-gradient(circle at 100%, ${flagBitColor} 0%, transparent 50%)`;
 
     const addressModeColor = this.usingGlobalAddressMode ? '#ff77ff' : 'transparent';
-    const addressModeIndicator = `radial-gradient(circle at 0% 0%, ${addressModeColor} 0%, transparent 66%)`;
+    const addressModeIndicator = `radial-gradient(circle at 0% 0%, ${addressModeColor} 0%, transparent 33%)`;
 
     const recordingStateColor = this.paused ? '#777777' : 'transparent';
-    const recordingStateIndicator = `radial-gradient(circle at 50% 100%, ${recordingStateColor} 0%, transparent 50%)`;
+    const recordingStateIndicator = `radial-gradient(circle at 50% 100%, ${recordingStateColor} 0%, transparent 33%)`;
 
     return [recordingStateIndicator, flagBitIndicator, addressModeIndicator, '#222222'].join(',');
   }
@@ -219,7 +219,7 @@ export class LooperComponent {
       return '#333333aa';
     }
     if (this.isDst(i, j) || this.isLastDst(i, j)) {
-      return '#444444aa';
+      return '#666666aa';
     }
     return '#000000aa';
   }
@@ -228,7 +228,7 @@ export class LooperComponent {
     return this.isCurrentContext(i, j) ? '#000000aa' : '#ffffffaa';
   }
 
-  dataAt(i: number, j: number): string {
+  CellContentAt(i: number, j: number): string {
     const cell = this.vm.data.readAt(new IVec2(i, j));
     if (!cell) return '';
     switch (cell.kind) {
@@ -240,10 +240,20 @@ export class LooperComponent {
           return '(*)';
         }
       }
-      case CellKind.Data:
+      case CellKind.Data: {
         return String(cell.data);
-      case CellKind.Code:
-        return '\u03BB';
+      }
+      case CellKind.Code: {
+        if (this.vm.contexts.some((ctx) => ctx.target.equals(new IVec2(i, j)))) {
+          if (this.vm.programCounter.instr.kind === Operation.Nop) {
+            // paused
+            return '<div class="pi pi-pause-circle pointer-events-none"></div>';
+          }
+          // running
+          return '<div class="pi pi-spinner-dotted pi-spin pointer-events-none"></div>';
+        }
+        return '<div class="pi pi-play-circle pointer-events-none"></div>';
+      }
     }
   }
 
@@ -253,9 +263,13 @@ export class LooperComponent {
 
   onDrop(i: number, j: number) {
     this.looper.setDst(i, j);
-    if (
-      this.looper.srcAddr &&
-      this.looper.dstAddr &&
+    if (!this.looper.srcAddr || !this.looper.dstAddr) {
+      return;
+    }
+    // shortcuts
+    if (this.vm.read(this.looper.srcAddr)?.kind === CellKind.Code) {
+      this.recordAndPlayImmediately(Operation.BranchWithLink);
+    } else if (
       this.looper.srcAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentOrigin) &&
       this.looper.dstAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentTarget)
     ) {

@@ -6,6 +6,7 @@ import {
   CellKind,
   CodeCell,
   ExecutionContext,
+  InstructionRef,
   IVec2,
   Operation,
 } from './types';
@@ -27,6 +28,10 @@ export class VirtualMachine {
     const context = this.contexts[this.contexts.length - 1];
     assert(context !== undefined);
     return context;
+  }
+
+  public get programCounter(): InstructionRef {
+    return this.currentContext.currInstruction;
   }
 
   public get currentOrigin(): IVec2 {
@@ -174,12 +179,13 @@ export class VirtualMachine {
         assert(fnCell.kind === CellKind.Code);
         this.flag = undefined;
         this.currentContext.currInstruction = instr.link;
+        const newOrigin = instr.origin.coords.add(this.currentOrigin);
         if (instr.link.instr.kind === Operation.Return && this.contexts.length > 1) {
           this.contexts.pop(); // tail-call optimization
         }
         this.contexts.push({
           target: globalFuncAddress.coords,
-          origin: instr.origin.coords.add(this.currentOrigin),
+          origin: newOrigin,
           prevInstruction: { instr: { kind: Operation.Nop } },
           currInstruction: fnCell.entry,
         });

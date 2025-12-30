@@ -178,9 +178,9 @@ export class BMAC {
       case Operation.Nop:
         return 'pi pi-ban';
       case Operation.Pointer:
-        return 'pi pi-link';
+        return 'pi pi-external-link';
       case Operation.PointerIncrement:
-        return 'pi pi-fast-forward';
+        return 'pi pi-step-forward';
       case Operation.Move:
         return 'pi pi-clone';
       case Operation.Add:

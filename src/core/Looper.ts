@@ -139,7 +139,11 @@ export class Looper {
           kind,
           target: this.srcAddr.toGlobal(this.vm.currentOrigin),
           origin: this.dstAddr,
-          link: { instr: { kind: Operation.Nop } },
+          link: {
+            instr: {
+              kind: this.srcAddr.mode === AddressMode.Global ? Operation.Return : Operation.Nop,
+            },
+          },
         });
         break;
       }

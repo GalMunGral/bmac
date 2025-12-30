@@ -6,6 +6,7 @@ export class Memory2D {
       { kind: CellKind.Code, entry: { instr: { kind: Operation.Nop } } },
       { kind: CellKind.Data, data: 0 },
       { kind: CellKind.Data, data: 1 },
+      { kind: CellKind.Data, data: 10 },
     ],
   ];
 

@@ -174,6 +174,9 @@ export class VirtualMachine {
         assert(fnCell.kind === CellKind.Code);
         this.flag = undefined;
         this.currentContext.currInstruction = instr.link;
+        if (instr.link.instr.kind === Operation.Return && this.contexts.length > 1) {
+          this.contexts.pop(); // tail-call optimization
+        }
         this.contexts.push({
           target: globalFuncAddress.coords,
           origin: instr.origin.coords.add(this.currentOrigin),

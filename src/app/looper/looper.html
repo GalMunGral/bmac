@@ -1,15 +1,16 @@
 <div class="w-screen h-screen overflow-scroll select-none"
      [style.background]="statusIndicators"
+     (click)="this.looper.reset()"
 >
-  <table class="table-fixed w-0"
-         (click)="this.looper.reset()"
-  >
+  <div class="flex flex-col gap-0.5">
     @for (row of indices; let i = $index; track i) {
-      <tr>
+      <div class="flex flex-row gap-0.5">
         @for (_ of row; let j = $index; track j) {
-          <td
-            class="w-[80px] h-[24px] relative border-1 border-transparent text-[12px] text-center font-black
-            [&:not(:has(*:hover)):hover]:bg-gray-700! [&:not(:has(*:hover)):active]:bg-gray-400!"
+          <div
+            class="flex-none w-[40px] h-[40px] relative
+            flex items-center justify-center
+            [&:not(:has(*:hover)):hover]:bg-gray-400!
+            text-[14px] text-center font-black"
             draggable="true"
             [style.background-color]="cellColorAt(i, j)"
             [style.color]="textColorAt(i, j)"
@@ -28,9 +29,9 @@
                 />
               }
             }
-          </td>
+          </div>
         }
-      </tr>
+      </div>
     }
-  </table>
+  </div>
 </div>

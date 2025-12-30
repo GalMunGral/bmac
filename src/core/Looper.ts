@@ -135,6 +135,8 @@ export class Looper {
       case Operation.BranchWithLink: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
+        const srcCell = this.vm.read(this.srcAddr);
+        assert(srcCell === undefined || srcCell.kind === CellKind.Code);
         this.replace({
           kind,
           target: this.srcAddr.toGlobal(this.vm.currentOrigin),

@@ -247,12 +247,12 @@ export class LooperComponent {
         if (this.vm.contexts.some((ctx) => ctx.target.equals(new IVec2(i, j)))) {
           if (this.vm.programCounter.instr.kind === Operation.Nop) {
             // paused
-            return '<div class="pi pi-pause-circle pointer-events-none"></div>';
+            return '<div class="pi pi-pause pointer-events-none"></div>';
           }
           // running
           return '<div class="pi pi-spinner-dotted pi-spin pointer-events-none"></div>';
         }
-        return '<div class="pi pi-play-circle pointer-events-none"></div>';
+        return '<div class="pi pi-play pointer-events-none"></div>';
       }
     }
   }

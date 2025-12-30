@@ -8,7 +8,8 @@
         @for (_ of row; let j = $index; track j) {
           <div class="relative" (drop)="onDrop(i, j)">
             <div
-              class="flex-none w-[40px] h-[40px] flex items-center justify-center text-[16x] text-center font-bold
+              [title]="CellContentAt(i, j)"
+              class="flex-none w-[32px] h-[32px] flex items-center justify-center text-[16x] text-center font-bold overflow-hidden
             [&:not(:has(*:hover)):hover]:bg-gray-400!"
               draggable="true"
               [innerHTML]="CellContentAt(i, j)"

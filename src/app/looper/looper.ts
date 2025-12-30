@@ -216,10 +216,10 @@ export class LooperComponent {
       return '#ffffffaa';
     }
     if (this.isSrc(i, j) || this.isLastSrc(i, j)) {
-      return '#333333aa';
+      return '#333355aa';
     }
     if (this.isDst(i, j) || this.isLastDst(i, j)) {
-      return '#666666aa';
+      return '#553333aa';
     }
     return '#000000aa';
   }
@@ -268,7 +268,7 @@ export class LooperComponent {
     }
     // shortcuts
     if (this.vm.read(this.looper.srcAddr)?.kind === CellKind.Code) {
-      this.recordAndPlayImmediately(Operation.BranchWithLink);
+      // this.recordAndPlayImmediately(Operation.BranchWithLink);
     } else if (
       this.looper.srcAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentOrigin) &&
       this.looper.dstAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentTarget)

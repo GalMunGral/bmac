@@ -1,14 +1,15 @@
 import { VirtualMachine } from './VirtualMachine';
+import { assert } from './utils';
 import {
   Address,
-  AddressKind,
+  AddressCell,
   AddressMode,
-  CellKind,
+  CodeCell,
+  DataCell,
+  GridIndex,
   Instruction,
-  IVec2,
   Operation,
 } from './types';
-import { assert } from './utils';
 
 export class MacroRecorder {
   public playing = true;
@@ -25,12 +26,7 @@ export class MacroRecorder {
   }
 
   public toAddress(i: number, j: number) {
-    const cell = this.vm.data.readAt(new IVec2(i, j));
-    const globalAddr = new Address(
-      cell?.kind === CellKind.Address ? AddressKind.IndirectAddress : AddressKind.DirectAddress,
-      AddressMode.Global,
-      new IVec2(i, j),
-    );
+    const globalAddr = new Address(AddressMode.Global, new GridIndex(i, j));
     return this.mode === AddressMode.Global
       ? globalAddr
       : globalAddr.toLocal(this.vm.currentOrigin);
@@ -54,12 +50,9 @@ export class MacroRecorder {
       case Operation.Nop: {
         break;
       }
-      case Operation.Pointer: {
+      case Operation.AddressOf: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const srcCell = this.vm.read(this.srcAddr);
-        const dstCell = this.vm.read(this.dstAddr);
-        assert(srcCell !== undefined && srcCell.kind === CellKind.Data);
         this.replace({
           kind,
           src: this.srcAddr,
@@ -72,7 +65,6 @@ export class MacroRecorder {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
         const srcCell = this.vm.read(this.srcAddr);
-        const dstCell = this.vm.read(this.dstAddr);
         assert(srcCell !== undefined);
         this.replace({
           kind,
@@ -91,8 +83,8 @@ export class MacroRecorder {
         assert(this.dstAddr !== null);
         const srcCell = this.vm.read(this.srcAddr);
         const dstCell = this.vm.read(this.dstAddr);
-        assert(srcCell !== undefined && srcCell.kind === CellKind.Data);
-        assert(dstCell !== undefined && dstCell.kind === CellKind.Data);
+        assert(srcCell !== undefined && srcCell instanceof DataCell);
+        assert(dstCell !== undefined && !(dstCell instanceof CodeCell));
         this.replace({
           kind,
           src: this.srcAddr,
@@ -101,12 +93,24 @@ export class MacroRecorder {
         });
         break;
       }
-      case Operation.PointerIncrement: {
+      case Operation.Read: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const dataCell = this.vm.read(this.srcAddr);
-        assert(dataCell !== undefined && dataCell.kind === CellKind.Data);
-        assert(this.dstAddr.kind === AddressKind.IndirectAddress);
+        const addrCell = this.vm.read(this.srcAddr);
+        assert(addrCell !== undefined && addrCell instanceof AddressCell);
+        this.replace({
+          kind,
+          src: this.srcAddr,
+          dst: this.dstAddr,
+          next: { instr: { kind: Operation.Nop } },
+        });
+        break;
+      }
+      case Operation.Write: {
+        assert(this.srcAddr !== null);
+        assert(this.dstAddr !== null);
+        const addrCell = this.vm.read(this.dstAddr);
+        assert(addrCell !== undefined && addrCell instanceof AddressCell);
         this.replace({
           kind,
           src: this.srcAddr,
@@ -119,10 +123,6 @@ export class MacroRecorder {
       case Operation.BranchIfLessThan: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const leftCell = this.vm.read(this.srcAddr);
-        const rightCell = this.vm.read(this.dstAddr);
-        assert(leftCell !== undefined && leftCell.kind === CellKind.Data);
-        assert(rightCell !== undefined && rightCell.kind === CellKind.Data);
         this.replace({
           kind,
           left: this.srcAddr,
@@ -136,7 +136,7 @@ export class MacroRecorder {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
         const srcCell = this.vm.read(this.srcAddr);
-        assert(srcCell === undefined || srcCell.kind === CellKind.Code);
+        assert(srcCell === undefined || srcCell instanceof CodeCell);
         this.replace({
           kind,
           target: this.srcAddr.toGlobal(this.vm.currentOrigin),

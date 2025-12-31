@@ -2,19 +2,20 @@
      [style.background]="statusIndicators"
      (click)="this.recorder.reset()"
 >
-  <div class="flex flex-col gap-0.5">
+  <div class="flex flex-col relative" [style.gap]="gapSize + 'px'">
     @for (row of indices; let i = $index; track i) {
-      <div class="flex flex-row gap-0.5">
+      <div class="flex flex-row" [style.gap]="gapSize + 'px'">
         @for (_ of row; let j = $index; track j) {
           <div class="relative" (drop)="onDrop(i, j)">
             <div
-              [title]="CellContentAt(i, j)"
-              class="flex-none w-[32px] h-[32px] flex items-center justify-center text-[16x] text-center font-bold overflow-hidden
+              class="flex-none flex items-center justify-center text-[16x] text-center font-bold truncate
             [&:not(:has(*:hover)):hover]:bg-gray-400!"
               draggable="true"
-              [innerHTML]="CellContentAt(i, j)"
+              [innerHTML]="cellContentAt(i, j)"
               [style.background-color]="cellColorAt(i, j)"
               [style.color]="textColorAt(i, j)"
+              [style.width]="cellSize + 'px'"
+              [style.height]="cellSize + 'px'"
               (dragstart)="onDragStart(i, j)"
               (dragover)="$event.preventDefault()"
             ></div>
@@ -32,5 +33,36 @@
         }
       </div>
     }
+    <svg class="absolute left-0 top-0 pointer-events-none"
+         [attr.width]="n * (cellSize + gapSize)"
+         [attr.height]="m * (cellSize + gapSize)"
+    >
+      <defs>
+        <marker
+          id="triangle"
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerUnits="userSpaceOnUse"
+          markerWidth="16"
+          markerHeight="16"
+          orient="auto">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="context-fill"/>
+        </marker>
+      </defs>
+      @for (row of indices; let i = $index; track i) {
+        @for (_ of row; let j = $index; track j) {
+          @let coords = getPointerCoordinates(i, j);
+          @if (coords !== null) {
+            <line
+              fill="#777777" stroke="#777777" stroke-width="4" opacity="0.5"
+              marker-end="url(#triangle)"
+              [attr.x1]="coords.x1" [attr.y1]="coords.y1"
+              [attr.x2]="coords.x2" [attr.y2]="coords.y2"
+            />
+          }
+        }
+      }
+    </svg>
   </div>
 </div>

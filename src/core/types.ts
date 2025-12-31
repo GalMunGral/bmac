@@ -1,97 +1,104 @@
-export enum AddressKind {
-  DirectAddress = 'Direct',
-  IndirectAddress = 'Indirect',
-}
-
 export enum AddressMode {
   Global = 'Global',
   Local = 'Local',
 }
 
-export class IVec2 {
+export class GridIndex {
   constructor(
     public i: number = 0,
     public j: number = 0,
   ) {}
 
-  public equals(other: IVec2) {
+  public clone() {
+    return new GridIndex(this.i, this.j);
+  }
+
+  public equals(other: GridIndex) {
     return this.i === other.i && this.j === other.j;
   }
 
-  public add(other: IVec2) {
-    return new IVec2(this.i + other.i, this.j + other.j);
+  public add(other: GridIndex) {
+    return new GridIndex(this.i + other.i, this.j + other.j);
   }
 
-  public sub(other: IVec2) {
-    return new IVec2(this.i - other.i, this.j - other.j);
+  public sub(other: GridIndex) {
+    return new GridIndex(this.i - other.i, this.j - other.j);
   }
 }
 
 export class Address {
   constructor(
-    public kind: AddressKind,
     public mode: AddressMode,
-    public coords: IVec2,
+    public coords: GridIndex,
   ) {}
 
-  public add(offset: IVec2) {
-    return new Address(this.kind, this.mode, this.coords.add(offset));
+  public clone() {
+    return new Address(this.mode, this.coords.clone());
   }
 
-  public toLocal(origin: IVec2) {
+  public toLocal(origin: GridIndex) {
     return new Address(
-      this.kind,
       AddressMode.Local,
       this.mode === AddressMode.Local ? this.coords : this.coords.sub(origin),
     );
   }
 
-  public toGlobal(origin: IVec2) {
+  public toGlobal(origin: GridIndex) {
     return new Address(
-      this.kind,
       AddressMode.Global,
       this.mode === AddressMode.Global ? this.coords : this.coords.add(origin),
     );
   }
 }
 
-export enum CellKind {
-  Address = 'ADDR',
-  Data = 'DATA',
-  Code = 'CODE',
+export abstract class Cell {
+  abstract clone(): Cell;
 }
 
-export interface DataCell {
-  kind: CellKind.Data;
-  data: number;
+export class DataCell extends Cell {
+  constructor(public data: number) {
+    super();
+  }
+  clone(): Cell {
+    return new DataCell(this.data);
+  }
 }
 
-export interface AddressCell {
-  kind: CellKind.Address;
-  addr: Address;
+export class AddressCell extends Cell {
+  constructor(public addr: Address) {
+    super();
+  }
+  clone(): Cell {
+    return new AddressCell(this.addr.clone());
+  }
 }
 
-export interface CodeCell {
-  kind: CellKind.Code;
-  entry: InstructionRef;
+export class CodeCell extends Cell {
+  constructor(public entry: InstructionRef) {
+    super();
+  }
+  clone(): Cell {
+    return new CodeCell({
+      instr: this.entry.instr,
+    });
+  }
 }
-
-export type Cell = AddressCell | DataCell | CodeCell;
 
 export enum Operation {
-  Nop = '_',
-  Pointer = '&',
-  PointerIncrement = '&++',
-  Move = '->',
-  Add = '+',
-  Subtract = '-',
-  Multiply = '*',
-  Divide = '/',
-  Modulo = '%',
-  BranchIfEqual = '==',
-  BranchIfLessThan = '<',
-  BranchWithLink = 'call',
-  Return = 'return',
+  Nop,
+  AddressOf,
+  Read,
+  Write,
+  Move,
+  Add,
+  Subtract,
+  Multiply,
+  Divide,
+  Modulo,
+  BranchIfEqual,
+  BranchIfLessThan,
+  BranchWithLink,
+  Return,
 }
 
 export interface NopInstruction {
@@ -100,8 +107,9 @@ export interface NopInstruction {
 
 export interface DataInstruction {
   kind:
-    | Operation.Pointer
-    | Operation.PointerIncrement
+    | Operation.AddressOf
+    | Operation.Read
+    | Operation.Write
     | Operation.Move
     | Operation.Add
     | Operation.Subtract
@@ -144,8 +152,8 @@ export interface InstructionRef {
 }
 
 export interface ExecutionContext {
-  target: IVec2;
-  origin: IVec2;
+  target: GridIndex;
+  origin: GridIndex;
   prevInstruction: InstructionRef;
   currInstruction: InstructionRef;
 }

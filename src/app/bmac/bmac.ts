@@ -4,11 +4,12 @@ import { VirtualMachine } from '../../core/VirtualMachine';
 import { ButtonModule } from 'primeng/button';
 import {
   Address,
-  AddressKind,
+  AddressCell,
   AddressMode,
-  CellKind,
+  CodeCell,
+  DataCell,
+  GridIndex,
   Instruction,
-  IVec2,
   Operation,
 } from '../../core/types';
 
@@ -30,19 +31,22 @@ export class BMAC {
   }
 
   readonly operations: Operation[] = [
-    Operation.Move,
+    Operation.BranchWithLink,
     Operation.Add,
     Operation.Subtract,
     Operation.Multiply,
     Operation.Divide,
     Operation.Modulo,
-    Operation.PointerIncrement,
-    Operation.Pointer,
-    Operation.BranchIfLessThan,
     Operation.BranchIfEqual,
-    Operation.BranchWithLink,
+    Operation.BranchIfLessThan,
+    Operation.AddressOf,
+    Operation.Read,
+    Operation.Write,
+    Operation.Move,
   ];
 
+  cellSize = 40;
+  gapSize = 1;
   m = 100;
   n = 100;
   indices = Array(this.m)
@@ -69,8 +73,9 @@ export class BMAC {
 
   public getInstrSrc(instr: Instruction): Address | null {
     switch (instr.kind) {
-      case Operation.Pointer:
-      case Operation.PointerIncrement:
+      case Operation.AddressOf:
+      case Operation.Read:
+      case Operation.Write:
       case Operation.Move:
       case Operation.Add:
       case Operation.Subtract:
@@ -91,8 +96,9 @@ export class BMAC {
 
   public getInstrDst(instr: Instruction): Address | null {
     switch (instr.kind) {
-      case Operation.Pointer:
-      case Operation.PointerIncrement:
+      case Operation.AddressOf:
+      case Operation.Read:
+      case Operation.Write:
       case Operation.Move:
       case Operation.Add:
       case Operation.Subtract:
@@ -113,13 +119,13 @@ export class BMAC {
 
   isSrc(i: number, j: number) {
     const o = this.vm.currentOrigin;
-    const p = new IVec2(i, j);
+    const p = new GridIndex(i, j);
     return Boolean(this.recorder.srcAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastSrc(i: number, j: number) {
     const o = this.vm.currentOrigin;
-    const p = new IVec2(i, j);
+    const p = new GridIndex(i, j);
     return Boolean(
       this.getInstrSrc(this.vm.currentContext.prevInstruction.instr)?.toGlobal(o).coords.equals(p),
     );
@@ -127,21 +133,44 @@ export class BMAC {
 
   isDst(i: number, j: number) {
     const o = this.vm.currentOrigin;
-    const p = new IVec2(i, j);
+    const p = new GridIndex(i, j);
     return Boolean(this.recorder.dstAddr?.toGlobal(o).coords.equals(p));
   }
 
   isLastDst(i: number, j: number) {
     const o = this.vm.currentOrigin;
-    const p = new IVec2(i, j);
+    const p = new GridIndex(i, j);
     return Boolean(
       this.getInstrDst(this.vm.currentContext.prevInstruction.instr)?.toGlobal(o).coords.equals(p),
     );
   }
 
   isCurrentContext(i: number, j: number) {
-    const p = new IVec2(i, j);
+    const p = new GridIndex(i, j);
     return this.vm.currentOrigin.equals(p) || this.vm.currentTarget.equals(p);
+  }
+
+  getPointerCoordinates(
+    i: number,
+    j: number,
+  ): { x1: number; x2: number; y1: number; y2: number } | null {
+    const cell = this.vm.read(new Address(AddressMode.Global, new GridIndex(i, j)));
+    if (!(cell instanceof AddressCell)) {
+      return null;
+    }
+    const target = cell.addr.toGlobal(this.vm.currentOrigin).coords;
+    const coords = {
+      x1: j * (this.cellSize + 1) + this.cellSize / 2,
+      y1: i * (this.cellSize + 1) + this.cellSize / 2,
+      x2: target.j * (this.cellSize + 1) + this.cellSize / 2,
+      y2: target.i * (this.cellSize + 1) + this.cellSize / 2,
+    };
+    const deltaX = coords.x1 - coords.x2;
+    const deltaY = coords.y1 - coords.y2;
+    const l = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    coords.x2 += (deltaX / l) * (this.cellSize / 2);
+    coords.y2 += (deltaY / l) * (this.cellSize / 2);
+    return coords;
   }
 
   get statusIndicators() {
@@ -177,10 +206,12 @@ export class BMAC {
     switch (operation) {
       case Operation.Nop:
         return 'pi pi-ban';
-      case Operation.Pointer:
-        return 'pi pi-external-link';
-      case Operation.PointerIncrement:
-        return 'pi pi-step-forward';
+      case Operation.AddressOf:
+        return 'pi pi-at';
+      case Operation.Read:
+        return 'pi pi-file-export';
+      case Operation.Write:
+        return 'pi pi-file-import';
       case Operation.Move:
         return 'pi pi-clone';
       case Operation.Add:
@@ -206,11 +237,6 @@ export class BMAC {
     }
   }
 
-  rotateForOperation(operation: Operation) {
-    if (operation === Operation.Divide) return '45deg';
-    return 'none';
-  }
-
   cellColorAt(i: number, j: number) {
     if (this.isCurrentContext(i, j)) {
       return '#ffffffaa';
@@ -228,33 +254,26 @@ export class BMAC {
     return this.isCurrentContext(i, j) ? '#000000aa' : '#ffffffaa';
   }
 
-  CellContentAt(i: number, j: number): string {
-    const cell = this.vm.data.readAt(new IVec2(i, j));
+  cellContentAt(i: number, j: number): string {
+    const cell = this.vm.data.readAt(new GridIndex(i, j));
     if (!cell) return '';
-    switch (cell.kind) {
-      case CellKind.Address: {
-        if (cell.addr.kind === AddressKind.DirectAddress) {
-          const c = this.vm.read(cell.addr);
-          return `(${c && c.kind === CellKind.Data ? c.data : '_'})`;
-        } else {
-          return '(*)';
+    if (cell instanceof AddressCell) {
+      const { i, j } = cell.addr.toGlobal(this.vm.currentOrigin).coords;
+      return '';
+    } else if (cell instanceof DataCell) {
+      return String(cell.data);
+    } else if (cell instanceof CodeCell) {
+      if (this.vm.contexts.some((ctx) => ctx.target.equals(new GridIndex(i, j)))) {
+        if (this.vm.programCounter.instr.kind === Operation.Nop) {
+          // paused
+          return '<div class="pi pi-pause pointer-events-none"></div>';
         }
+        // running
+        return '<div class="pi pi-spinner-dotted pi-spin pointer-events-none"></div>';
       }
-      case CellKind.Data: {
-        return String(cell.data);
-      }
-      case CellKind.Code: {
-        if (this.vm.contexts.some((ctx) => ctx.target.equals(new IVec2(i, j)))) {
-          if (this.vm.programCounter.instr.kind === Operation.Nop) {
-            // paused
-            return '<div class="pi pi-pause pointer-events-none"></div>';
-          }
-          // running
-          return '<div class="pi pi-spinner-dotted pi-spin pointer-events-none"></div>';
-        }
-        return '<div class="pi pi-play pointer-events-none"></div>';
-      }
+      return '<div class="pi pi-play pointer-events-none"></div>';
     }
+    return '';
   }
 
   onDragStart(i: number, j: number) {
@@ -267,7 +286,7 @@ export class BMAC {
       return;
     }
     // shortcuts
-    if (this.vm.read(this.recorder.srcAddr)?.kind === CellKind.Code) {
+    if (this.vm.read(this.recorder.srcAddr) instanceof CodeCell) {
       // this.recordAndPlayImmediately(Operation.BranchWithLink);
     } else if (
       this.recorder.srcAddr.toGlobal(this.vm.currentOrigin).coords.equals(this.vm.currentOrigin) &&

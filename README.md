@@ -1,6 +1,7 @@
 # Babushka Macros
 
-A recursive macro recorder (as in Excel macro, not C or Lisp macro) on a 2D grid for introducing computing through programming by demonstration (PbD). Uses only drag-and-drop interactions with zero inference and zero generalization.
+A recursive macro recorder on a 2D grid for teaching introductory programming through programming by demonstration (PbD). 
+Unlike most PbD systems, uses only direct recording and playback of drag-and-drop actions, without inference or generalization.
 
 ## Abstract 
 > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.

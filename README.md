@@ -3,11 +3,16 @@
 A macro (as in Excel macro, not C or Lisp macro) recorder, with conditional buns and recursive patties.
 
 ## Inspiration from ~~culinary~~ computer science:
-- Pygmalion: A Creative Programming Environment (Smith, 1975)
-  - https://apps.dtic.mil/sti/tr/pdf/ADA016811.pdf
-  - https://acypher.com/wwid/Chapters/01Pygmalion.html
-- Recursive Functions of Symbolic Expressions and Their Computation by Machine, Part I (McCarthy, 1960)
-  - https://www-formal.stanford.edu/jmc/recursive.pdf
-- Structure and Interpretation of Computer Programs (Abelson & Sussman, 1985)
-  - https://web.mit.edu/6.001/6.037/sicp.pdf
-  - https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/index.html
+- On computable numbers, with an application to the Entscheidungsproblem (Turing, 1937) [[paper]](https://www.cs.virginia.edu/~robins/Turing_Paper_1936.pdf)
+  > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.
+  > In elementary arithmetic the two-dimensional character of the paper is sometimes used.
+  > But such a use is always avoidable, and I think that it will be agreed that the two-dimensional character of paper is no essential of computation.
+  > I assume then that the computation is carried out on one-dimensional paper, i.e. on a tape divided into squares.
+    
+  Turing's idea, although mathematically elegant, makes pedagogy for computing more difficult, because a 2D grid has topological and geometric structures that a 1D tape doesn't possess—structures that are key to our visual-spatial intuition. This project seeks to return to Turing's own original intuition and restore the "child's arithmetic book" with the "two-dimensional character of paper" that, while "no essential of computation," is crucial for beginners who don't yet have the intuition for computing.
+
+- Pygmalion: A Creative Programming Environment (Smith, 1975) [[report]](https://apps.dtic.mil/sti/tr/pdf/ADA016811.pdf) [[article]](https://acypher.com/wwid/Chapters/01Pygmalion.html)
+- Recursive Functions of Symbolic Expressions and Their Computation by Machine, Part I (McCarthy, 1960) [[paper]](https://www-formal.stanford.edu/jmc/recursive.pdf)
+- Structure and Interpretation of Computer Programs (Abelson & Sussman, 1985) [[book]](https://web.mit.edu/6.001/6.037/sicp.pdf) [[website]](https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/index.html)
+- Human Resource Machine and 7 Billion Humans (Tomorrow Corporation, 2015/2018) [[website]](https://tomorrowcorporation.com/)
+- Excel Macro Recorder (Microsoft) [[docs]](https://support.microsoft.com/en-us/office/automate-tasks-with-the-macro-recorder-974ef220-f716-4e01-b015-3ea70e64937b)

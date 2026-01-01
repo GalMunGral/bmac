@@ -18,5 +18,4 @@ Turing's idea, although mathematically elegant, complicates the pedagogy of comp
 - Harold Abelson, Gerald Jay Sussman, and Julie Sussman. 1985/1996. [Structure and Interpretation of Computer Programs.](https://mitp-content-server.mit.edu/books/content/sectbyfn/books_pres_0/6515/sicp.zip/full-text/book/book-Z-H-4.html) MIT Press, Cambridge, MA.
 - Tomorrow Corporation. 2015. [Human Resource Machine.](https://tomorrowcorporation.com/humanresourcemachine) Video game. Tomorrow Corporation.
 - Tomorrow Corporation. 2018. [7 Billion Humans.](https://tomorrowcorporation.com/7billionhumans) Video game. Tomorrow Corporation.
-- Microsoft Corporation. n.d. [Excel Macro Recorder.](https://support.microsoft.com/en-us/office/automate-tasks-with-the-macro-recorder-974ef220-f716-4e01-b015-3ea70e64937b
-) Software documentation. Microsoft.
+- Microsoft Corporation. n.d. [Excel Macro Recorder.](https://support.microsoft.com/en-us/office/automate-tasks-with-the-macro-recorder-974ef220-f716-4e01-b015-3ea70e64937b) Software documentation. Microsoft.

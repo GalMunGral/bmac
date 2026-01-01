@@ -2,6 +2,7 @@
      [style.background]="statusIndicators"
      (click)="this.recorder.reset()"
 >
+  <div #dragImage class="bg-gray-400 fixed -left-[999px]" [style.width]="cellSize + 'px'" [style.height]="cellSize + 'px'"></div>
   <div class="flex flex-col relative" [style.gap]="gapSize + 'px'">
     @for (row of indices; let i = $index; track i) {
       <div class="flex flex-row" [style.gap]="gapSize + 'px'">
@@ -16,12 +17,13 @@
               [style.color]="textColorAt(i, j)"
               [style.width]="cellSize + 'px'"
               [style.height]="cellSize + 'px'"
-              (dragstart)="onDragStart(i, j)"
+              (dragstart)="onDragStart($event, i, j);"
               (dragover)="$event.preventDefault()"
             ></div>
             @if (paused && isDst(i, j)) {
               @for (operation of operations; track operation; let idx = $index) {
-                <p-button [icon]="iconForOperation(operation)" [rounded]="true" severity="secondary" size="large"
+                <p-button [icon]="iconForOperation(operation)"
+                          [rounded]="true" severity="secondary"
                           draggable="false"
                           class="absolute left-1/2 top-1/2 z-10 origin-top-left"
                           [style.transform]="transformForButtonAt(idx)"
@@ -34,6 +36,7 @@
       </div>
     }
     <svg class="absolute left-0 top-0 pointer-events-none"
+         [draggable]="false"
          [attr.width]="n * (cellSize + gapSize)"
          [attr.height]="m * (cellSize + gapSize)"
     >

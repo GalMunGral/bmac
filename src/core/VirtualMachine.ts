@@ -46,7 +46,7 @@ export class VirtualMachine {
     return this.data.readAt(addr.toGlobal(this.currentOrigin).coords);
   }
 
-  public write(addr: Address, cell: Cell): void {
+  public write(addr: Address, cell: Cell | undefined): void {
     return this.data.writeAt(addr.toGlobal(this.currentOrigin).coords, cell);
   }
 
@@ -58,6 +58,23 @@ export class VirtualMachine {
       }
       case Operation.AddressOf: {
         this.write(instr.dst, new AddressCell(instr.src.toGlobal(this.currentOrigin)));
+        this.flag = undefined;
+        this.currentContext.prevInstruction = this.currentContext.currInstruction;
+        this.currentContext.currInstruction = instr.next;
+        return true;
+      }
+      case Operation.Shift: {
+        const addrCell = this.read(instr.src);
+        assert(
+          addrCell !== undefined &&
+            addrCell instanceof AddressCell &&
+            addrCell.addr.mode === AddressMode.Global,
+        );
+        const p1 = addrCell.addr.coords;
+        const q1 = instr.src.toGlobal(this.currentOrigin).coords;
+        const q2 = instr.dst.toGlobal(this.currentOrigin).coords;
+        const p2 = p1.add(q2.sub(q1));
+        this.write(instr.src, new AddressCell(new Address(AddressMode.Global, p2)));
         this.flag = undefined;
         this.currentContext.prevInstruction = this.currentContext.currInstruction;
         this.currentContext.currInstruction = instr.next;
@@ -88,8 +105,7 @@ export class VirtualMachine {
       }
       case Operation.Move: {
         const srcCell = this.read(instr.src);
-        assert(srcCell !== undefined);
-        this.write(instr.dst, srcCell.clone());
+        this.write(instr.dst, srcCell?.clone());
         this.flag = undefined;
         this.currentContext.prevInstruction = this.currentContext.currInstruction;
         this.currentContext.currInstruction = instr.next;
@@ -103,30 +119,17 @@ export class VirtualMachine {
         const srcCell = this.read(instr.src);
         const dstCell = this.read(instr.dst);
         assert(srcCell !== undefined && srcCell instanceof DataCell);
-        assert(dstCell !== undefined && !(dstCell instanceof CodeCell));
-        if (dstCell instanceof DataCell) {
-          dstCell.data =
-            instr.kind === Operation.Add
-              ? dstCell.data + srcCell.data
-              : instr.kind === Operation.Subtract
-                ? dstCell.data - srcCell.data
-                : instr.kind === Operation.Multiply
-                  ? dstCell.data * srcCell.data
-                  : instr.kind === Operation.Divide
-                    ? Math.trunc(dstCell.data / srcCell.data)
-                    : dstCell.data % Math.floor(srcCell.data);
-        } else if (dstCell instanceof AddressCell) {
-          dstCell.addr.coords.j =
-            instr.kind === Operation.Add
-              ? dstCell.addr.coords.j + srcCell.data
-              : instr.kind === Operation.Subtract
-                ? dstCell.addr.coords.j - srcCell.data
-                : instr.kind === Operation.Multiply
-                  ? dstCell.addr.coords.j * srcCell.data
-                  : instr.kind === Operation.Divide
-                    ? Math.trunc(dstCell.addr.coords.j / srcCell.data)
-                    : dstCell.addr.coords.j % Math.floor(srcCell.data);
-        }
+        assert(dstCell !== undefined && dstCell instanceof DataCell);
+        dstCell.data =
+          instr.kind === Operation.Add
+            ? dstCell.data + srcCell.data
+            : instr.kind === Operation.Subtract
+              ? dstCell.data - srcCell.data
+              : instr.kind === Operation.Multiply
+                ? dstCell.data * srcCell.data
+                : instr.kind === Operation.Divide
+                  ? Math.trunc(dstCell.data / srcCell.data)
+                  : dstCell.data % Math.floor(srcCell.data);
         this.flag = undefined;
         this.currentContext.prevInstruction = this.currentContext.currInstruction;
         this.currentContext.currInstruction = instr.next;

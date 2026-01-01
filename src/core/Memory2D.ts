@@ -1,7 +1,7 @@
 import { Cell, CodeCell, DataCell, GridIndex, Operation } from './types';
 
 export class Memory2D {
-  private grid: Array<Array<Cell>> = [
+  private grid: Array<Array<Cell | undefined>> = [
     [
       new CodeCell({ instr: { kind: Operation.Nop } }),
       new DataCell(0),
@@ -24,7 +24,7 @@ export class Memory2D {
     return this.grid[coords.i]![coords.j];
   }
 
-  public writeAt(coords: GridIndex, cell: Cell): void {
+  public writeAt(coords: GridIndex, cell: Cell | undefined): void {
     if (!this.grid[coords.i]) {
       this.grid[coords.i] = [];
     }

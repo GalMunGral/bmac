@@ -87,6 +87,7 @@ export class CodeCell extends Cell {
 export enum Operation {
   Nop,
   AddressOf,
+  Shift,
   Read,
   Write,
   Move,
@@ -108,6 +109,7 @@ export interface NopInstruction {
 export interface DataInstruction {
   kind:
     | Operation.AddressOf
+    | Operation.Shift
     | Operation.Read
     | Operation.Write
     | Operation.Move

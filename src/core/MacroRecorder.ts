@@ -61,11 +61,26 @@ export class MacroRecorder {
         });
         break;
       }
+      case Operation.Shift: {
+        assert(this.srcAddr !== null);
+        assert(this.dstAddr !== null);
+        const addrCell = this.vm.read(this.srcAddr);
+        assert(
+          addrCell !== undefined &&
+            addrCell instanceof AddressCell &&
+            addrCell.addr.mode === AddressMode.Global,
+        );
+        this.replace({
+          kind,
+          src: this.srcAddr,
+          dst: this.dstAddr,
+          next: { instr: { kind: Operation.Nop } },
+        });
+        break;
+      }
       case Operation.Move: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
-        const srcCell = this.vm.read(this.srcAddr);
-        assert(srcCell !== undefined);
         this.replace({
           kind,
           src: this.srcAddr,
@@ -84,7 +99,7 @@ export class MacroRecorder {
         const srcCell = this.vm.read(this.srcAddr);
         const dstCell = this.vm.read(this.dstAddr);
         assert(srcCell !== undefined && srcCell instanceof DataCell);
-        assert(dstCell !== undefined && !(dstCell instanceof CodeCell));
+        assert(dstCell !== undefined && dstCell instanceof DataCell);
         this.replace({
           kind,
           src: this.srcAddr,

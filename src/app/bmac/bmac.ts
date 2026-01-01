@@ -1,4 +1,11 @@
-import { ChangeDetectorRef, Component, HostListener, inject } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  HostListener,
+  inject,
+  viewChild,
+} from '@angular/core';
 import { MacroRecorder } from '../../core/MacroRecorder';
 import { VirtualMachine } from '../../core/VirtualMachine';
 import { ButtonModule } from 'primeng/button';
@@ -30,6 +37,8 @@ export class BMAC {
     this.recorder.mode = shiftKeyPressed ? AddressMode.Global : AddressMode.Local;
   }
 
+  dragImage = viewChild<ElementRef>('dragImage');
+
   readonly operations: Operation[] = [
     Operation.BranchWithLink,
     Operation.Add,
@@ -39,9 +48,10 @@ export class BMAC {
     Operation.Modulo,
     Operation.BranchIfEqual,
     Operation.BranchIfLessThan,
-    Operation.AddressOf,
-    Operation.Read,
     Operation.Write,
+    Operation.Read,
+    Operation.Shift,
+    Operation.AddressOf,
     Operation.Move,
   ];
 
@@ -74,6 +84,7 @@ export class BMAC {
   public getInstrSrc(instr: Instruction): Address | null {
     switch (instr.kind) {
       case Operation.AddressOf:
+      case Operation.Shift:
       case Operation.Read:
       case Operation.Write:
       case Operation.Move:
@@ -97,6 +108,7 @@ export class BMAC {
   public getInstrDst(instr: Instruction): Address | null {
     switch (instr.kind) {
       case Operation.AddressOf:
+      case Operation.Shift:
       case Operation.Read:
       case Operation.Write:
       case Operation.Move:
@@ -165,11 +177,15 @@ export class BMAC {
       x2: target.j * (this.cellSize + 1) + this.cellSize / 2,
       y2: target.i * (this.cellSize + 1) + this.cellSize / 2,
     };
-    const deltaX = coords.x1 - coords.x2;
-    const deltaY = coords.y1 - coords.y2;
-    const l = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-    coords.x2 += (deltaX / l) * (this.cellSize / 2);
-    coords.y2 += (deltaY / l) * (this.cellSize / 2);
+    const dx = coords.x2 - coords.x1;
+    const dy = coords.y2 - coords.y1;
+    const l = Math.sqrt(dx * dx + dy * dy);
+    const paddingStart = this.cellSize / 3;
+    const paddingEnd = this.cellSize / 2;
+    coords.x1 += (dx / l) * paddingStart;
+    coords.y1 += (dy / l) * paddingStart;
+    coords.x2 -= (dx / l) * paddingEnd;
+    coords.y2 -= (dy / l) * paddingEnd;
     return coords;
   }
 
@@ -207,7 +223,9 @@ export class BMAC {
       case Operation.Nop:
         return 'pi pi-ban';
       case Operation.AddressOf:
-        return 'pi pi-at';
+        return 'pi pi-external-link';
+      case Operation.Shift:
+        return 'pi pi-arrows-alt';
       case Operation.Read:
         return 'pi pi-file-export';
       case Operation.Write:
@@ -259,24 +277,29 @@ export class BMAC {
     if (!cell) return '';
     if (cell instanceof AddressCell) {
       const { i, j } = cell.addr.toGlobal(this.vm.currentOrigin).coords;
-      return '';
+      return '<i class="pi pi-external-link"></i>';
     } else if (cell instanceof DataCell) {
       return String(cell.data);
     } else if (cell instanceof CodeCell) {
       if (this.vm.contexts.some((ctx) => ctx.target.equals(new GridIndex(i, j)))) {
         if (this.vm.programCounter.instr.kind === Operation.Nop) {
           // paused
-          return '<div class="pi pi-pause pointer-events-none"></div>';
+          return '<i class="pi pi-pause pointer-events-none"></i>';
         }
         // running
-        return '<div class="pi pi-spinner-dotted pi-spin pointer-events-none"></div>';
+        return '<i class="pi pi-spinner-dotted pi-spin pointer-events-none"></i>';
       }
       return '<div class="pi pi-play pointer-events-none"></div>';
     }
     return '';
   }
 
-  onDragStart(i: number, j: number) {
+  onDragStart(e: DragEvent, i: number, j: number) {
+    e.dataTransfer?.setDragImage(
+      this.dragImage()?.nativeElement,
+      this.cellSize / 2,
+      this.cellSize / 2,
+    );
     this.recorder.setSrc(i, j);
   }
 

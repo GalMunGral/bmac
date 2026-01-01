@@ -1,7 +1,8 @@
-# BMAC: ~~Babushka Macros~~ Big Mac
+# Babushka Macros
 
-A macro (as in Excel macro, not C or Lisp macro) recorder, with conditional buns and recursive patties.
+A recursive macro (as in Excel macro, not C or Lisp macro) recorder on a 2D grid for introducing computing through programming by demonstration. Uses only drag-and-drop interactions with zero inference and zero generalization.
 
+## Abstract 
 > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.
 > In elementary arithmetic the two-dimensional character of the paper is sometimes used.
 > But such a use is always avoidable, and I think that it will be agreed that the two-dimensional character of paper is no essential of computation.
@@ -11,7 +12,7 @@ A macro (as in Excel macro, not C or Lisp macro) recorder, with conditional buns
     
 Turing's idea, although mathematically elegant, complicates the pedagogy of computing, because a 2D grid possesses topological and geometric structures that a 1D tape lacks -- structures central to our visual-spatial intuition. This project returns to Turing's original intuition by restoring the "child's arithmetic book" and the "two-dimensional character of paper," which, though "no essential of computation," is crucial for beginners who have not yet developed computational intuition.
 
-## Inspiration from ~~culinary~~ computer science:
+## References
 - Alan M. Turing. 1937. [On computable numbers, with an application to the Entscheidungsproblem.](https://www.cs.virginia.edu/~robins/Turing_Paper_1936.pdf) Proceedings of the London Mathematical Society 42, 2 (1937), 230–265.
 - John McCarthy. 1960. [Recursive functions of symbolic expressions and their computation by machine, Part I.](https://www-formal.stanford.edu/jmc/recursive.pdf) Communications of the ACM 3, 4 (1960), 184–195.
 - David C. Smith. 1975. [Pygmalion: A Creative Programming Environment.](https://worrydream.com/refs/Smith_DC_1975_-_Pygmalion.pdf) Technical Report STAN-CS-75-499, Stanford University, Artificial Intelligence Laboratory.

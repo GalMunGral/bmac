@@ -1,4 +1,4 @@
-# BMAC: ~~Beautiful Macros~~ Big Mac
+# BMAC: ~~Babushka Macros~~ Big Mac
 
 A macro (as in Excel macro, not C or Lisp macro) recorder, with conditional buns and recursive patties.
 

@@ -11,7 +11,7 @@ Unlike most PbD systems, it uses only direct recording and playback of drag-and-
 >
 > -- Alan Turing, *On Computable Numbers, with an Application to the Entscheidungsproblem* (1936)
     
-Turing's idea, being mathematically motivated, complicates the pedagogy of computing, because a 2D grid possesses topological and geometric structures that a 1D tape lacks -- structures central to our visual-spatial intuition. This project returns to Turing's original intuition by restoring the "child's arithmetic book" and the "two-dimensional character of paper," which, though "no essential of computation," are crucial for beginners who have not yet developed intuition of computational processes.
+Turing's idea, being mathematically motivated, complicates the pedagogy of computing, because a 2D grid possesses topological and geometric structures that a 1D tape lacks -- structures central to our visual-spatial intuition. This project returns to Turing's original inspiration by restoring the "child's arithmetic book" and the "two-dimensional character of paper," which, though "no essential of computation," are crucial for beginners who have not yet developed intuition of computational processes.
 
 ## References
 - Alan M. Turing. 1937. [On computable numbers, with an application to the Entscheidungsproblem.](https://www.cs.virginia.edu/~robins/Turing_Paper_1936.pdf) Proceedings of the London Mathematical Society 42, 2 (1937), 230–265.

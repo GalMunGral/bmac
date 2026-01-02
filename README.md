@@ -8,7 +8,7 @@
 >
 > -- Alan Turing, *On Computable Numbers, with an Application to the Entscheidungsproblem* (1936)
 
-The idea of a 1D tape, though mathematically clean, strips away the topological and geometric structures of a 2D grid that are central to our visual-spatial intuition, thereby complicating the pedagogy of computing. This project seeks to return to Turing's original inspiration by reimagining the "child's arithmetic book" and restoring the "two-dimensional character of paper," which, though "no essential of computation," is crucial for beginners who have not yet developed an intuition for computational processes.
+The idea of a 1D memory model,, though mathematically clean, strips away the topological and geometric structures of a 2D grid that are central to our visual-spatial intuition, thereby complicating the pedagogy of computing. This project seeks to return to Turing's original inspiration by reimagining the "child's arithmetic book" and restoring the "two-dimensional character of paper," which, though "no essential of computation," is crucial for beginners who have not yet developed an intuition for computational processes.
 
 The grid is powered by a recursive macro recorder, allowing recorded actions to nest within other recordings, including themselves. It offers an embodied introduction to computing through visual programming by demonstration (PbD), in the style of Pygmalion. It uses only direct recording and playback of drag-and-drop actions, without inference or generalization, keeping both data flow and control flow experiential -- expressed through the spatial and temporal unfolding of the playback animation -- rather than symbolic and conceptual, which demands active interpretation.
 

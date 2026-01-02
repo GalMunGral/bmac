@@ -1,8 +1,5 @@
 # Babushka Macros
 
-A recursive macro recorder on a 2D grid for an embodied introduction to computing through programming by demonstration (PbD).
-Unlike most PbD systems, it uses only direct recording and playback of drag-and-drop actions, without inference or generalization.
-
 ## Abstract 
 > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.
 > In elementary arithmetic the two-dimensional character of the paper is sometimes used.
@@ -10,8 +7,8 @@ Unlike most PbD systems, it uses only direct recording and playback of drag-and-
 > I assume then that the computation is carried out on one-dimensional paper, i.e. on a tape divided into squares.
 >
 > -- Alan Turing, *On Computable Numbers, with an Application to the Entscheidungsproblem* (1936)
-    
-Turing's idea, being mathematically motivated, complicates the pedagogy of computing, because a 2D grid possesses topological and geometric structures that a 1D tape lacks -- structures central to our visual-spatial intuition. This project returns to Turing's original inspiration by restoring the "child's arithmetic book" and the "two-dimensional character of paper," which, though "no essential of computation," are crucial for beginners who have not yet developed intuition of computational processes.
+
+The idea of a 1D tape, though mathematically clean, strips away the topological and geometric structures of a 2D grid that are central to our visual-spatial intuition, thereby complicating the pedagogy of computing. This project seeks to return to Turing's original inspiration by reimagining the "child's arithmetic book" and restoring the "two-dimensional character of paper," which, though "no essential of computation," are crucial for beginners who have not yet developed an intuition for computational processes. The grid is powered by a recursive macro recorder for an embodied introduction to computing through visual programming by demonstration (PbD). Unlike most PbD systems, it uses only direct recording and playback of drag-and-drop actions, without inference or generalization, keeping both data flow and control flow experiential rather than conceptual.
 
 ## References
 - Alan M. Turing. 1937. [On computable numbers, with an application to the Entscheidungsproblem.](https://www.cs.virginia.edu/~robins/Turing_Paper_1936.pdf) Proceedings of the London Mathematical Society 42, 2 (1937), 230–265.

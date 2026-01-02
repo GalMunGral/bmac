@@ -40,7 +40,7 @@ export class BMAC {
   dragImage = viewChild<ElementRef>('dragImage');
 
   readonly operations: Operation[] = [
-    Operation.BranchWithLink,
+    Operation.Move,
     Operation.Add,
     Operation.Subtract,
     Operation.Multiply,
@@ -48,11 +48,12 @@ export class BMAC {
     Operation.Modulo,
     Operation.BranchIfEqual,
     Operation.BranchIfLessThan,
+    Operation.BranchWithoutLink,
+    Operation.BranchWithLink,
     Operation.Write,
     Operation.Read,
-    Operation.Shift,
+    Operation.Advance,
     Operation.AddressOf,
-    Operation.Move,
   ];
 
   cellSize = 40;
@@ -84,7 +85,7 @@ export class BMAC {
   public getInstrSrc(instr: Instruction): Address | null {
     switch (instr.kind) {
       case Operation.AddressOf:
-      case Operation.Shift:
+      case Operation.Advance:
       case Operation.Read:
       case Operation.Write:
       case Operation.Move:
@@ -97,6 +98,7 @@ export class BMAC {
       case Operation.BranchIfEqual:
       case Operation.BranchIfLessThan:
         return instr.left;
+      case Operation.BranchWithoutLink:
       case Operation.BranchWithLink:
         return instr.target;
       case Operation.Return:
@@ -108,7 +110,7 @@ export class BMAC {
   public getInstrDst(instr: Instruction): Address | null {
     switch (instr.kind) {
       case Operation.AddressOf:
-      case Operation.Shift:
+      case Operation.Advance:
       case Operation.Read:
       case Operation.Write:
       case Operation.Move:
@@ -121,6 +123,7 @@ export class BMAC {
       case Operation.BranchIfEqual:
       case Operation.BranchIfLessThan:
         return instr.right;
+      case Operation.BranchWithoutLink:
       case Operation.BranchWithLink:
         return instr.origin;
       case Operation.Return:
@@ -224,7 +227,7 @@ export class BMAC {
         return 'pi pi-ban';
       case Operation.AddressOf:
         return 'pi pi-external-link';
-      case Operation.Shift:
+      case Operation.Advance:
         return 'pi pi-arrows-alt';
       case Operation.Read:
         return 'pi pi-file-export';
@@ -246,6 +249,8 @@ export class BMAC {
         return 'pi pi-equals';
       case Operation.BranchIfLessThan:
         return 'pi pi-chevron-left';
+      case Operation.BranchWithoutLink:
+        return 'pi pi-circle-off';
       case Operation.BranchWithLink:
         return 'pi pi-play-circle';
       case Operation.Return:

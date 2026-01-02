@@ -61,7 +61,7 @@ export class MacroRecorder {
         });
         break;
       }
-      case Operation.Shift: {
+      case Operation.Advance: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
         const addrCell = this.vm.read(this.srcAddr);
@@ -147,6 +147,18 @@ export class MacroRecorder {
         });
         break;
       }
+      case Operation.BranchWithoutLink: {
+        assert(this.srcAddr !== null);
+        assert(this.dstAddr !== null);
+        const srcCell = this.vm.read(this.srcAddr);
+        assert(srcCell === undefined || srcCell instanceof CodeCell);
+        this.replace({
+          kind,
+          target: this.srcAddr,
+          origin: this.dstAddr,
+        });
+        break;
+      }
       case Operation.BranchWithLink: {
         assert(this.srcAddr !== null);
         assert(this.dstAddr !== null);
@@ -154,11 +166,11 @@ export class MacroRecorder {
         assert(srcCell === undefined || srcCell instanceof CodeCell);
         this.replace({
           kind,
-          target: this.srcAddr.toGlobal(this.vm.currentOrigin),
+          target: this.srcAddr,
           origin: this.dstAddr,
           link: {
             instr: {
-              kind: this.srcAddr.mode === AddressMode.Global ? Operation.Return : Operation.Nop,
+              kind: Operation.Nop,
             },
           },
         });

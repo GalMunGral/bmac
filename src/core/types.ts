@@ -87,7 +87,7 @@ export class CodeCell extends Cell {
 export enum Operation {
   Nop,
   AddressOf,
-  Shift,
+  Advance,
   Read,
   Write,
   Move,
@@ -96,6 +96,7 @@ export enum Operation {
   Multiply,
   Divide,
   Modulo,
+  BranchWithoutLink,
   BranchIfEqual,
   BranchIfLessThan,
   BranchWithLink,
@@ -109,7 +110,7 @@ export interface NopInstruction {
 export interface DataInstruction {
   kind:
     | Operation.AddressOf
-    | Operation.Shift
+    | Operation.Advance
     | Operation.Read
     | Operation.Write
     | Operation.Move
@@ -131,6 +132,12 @@ export interface ConditionalBranchInstruction {
   ifFalse: InstructionRef;
 }
 
+export interface BranchInstruction {
+  kind: Operation.BranchWithoutLink;
+  origin: Address;
+  target: Address;
+}
+
 export interface BranchWithLinkInstruction {
   kind: Operation.BranchWithLink;
   origin: Address;
@@ -146,6 +153,7 @@ export type Instruction =
   | NopInstruction
   | DataInstruction
   | ConditionalBranchInstruction
+  | BranchInstruction
   | BranchWithLinkInstruction
   | ReturnInstruction;
 

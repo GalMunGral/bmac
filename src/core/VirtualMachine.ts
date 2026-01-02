@@ -63,7 +63,7 @@ export class VirtualMachine {
         this.currentContext.currInstruction = instr.next;
         return true;
       }
-      case Operation.Shift: {
+      case Operation.Advance: {
         const addrCell = this.read(instr.src);
         assert(
           addrCell !== undefined &&
@@ -176,26 +176,37 @@ export class VirtualMachine {
         }
         return true;
       }
-      case Operation.BranchWithLink: {
-        const globalFuncAddress = new Address(AddressMode.Global, instr.target.coords);
-        let fnCell = this.read(globalFuncAddress);
+      case Operation.BranchWithoutLink: {
+        let fnCell = this.read(instr.target);
         if (!fnCell || !(fnCell instanceof CodeCell)) {
           fnCell = new CodeCell({
             instr: { kind: Operation.Nop },
           });
-          this.write(globalFuncAddress, fnCell);
+          this.write(instr.target, fnCell);
+        }
+        assert(fnCell instanceof CodeCell);
+        this.flag = undefined;
+        this.currentContext.target = instr.target.toGlobal(this.currentOrigin).coords;
+        this.currentContext.origin = instr.origin.toGlobal(this.currentOrigin).coords;
+        this.currentContext.prevInstruction = { instr: { kind: Operation.Nop } };
+        this.currentContext.currInstruction = fnCell.entry;
+        return true;
+      }
+      case Operation.BranchWithLink: {
+        let fnCell = this.read(instr.target);
+        if (!fnCell || !(fnCell instanceof CodeCell)) {
+          fnCell = new CodeCell({
+            instr: { kind: Operation.Nop },
+          });
+          this.write(instr.target, fnCell);
         }
         assert(fnCell instanceof CodeCell);
         this.flag = undefined;
         this.currentContext.prevInstruction = this.currentContext.currInstruction;
         this.currentContext.currInstruction = instr.link;
-        const newOrigin = instr.origin.coords.add(this.currentOrigin);
-        if (instr.link.instr.kind === Operation.Return && this.contexts.length > 1) {
-          this.contexts.pop(); // tail-call optimization
-        }
         this.contexts.push({
-          target: globalFuncAddress.coords,
-          origin: newOrigin,
+          target: instr.target.toGlobal(this.currentOrigin).coords,
+          origin: instr.origin.toGlobal(this.currentOrigin).coords,
           prevInstruction: { instr: { kind: Operation.Nop } },
           currInstruction: fnCell.entry,
         });

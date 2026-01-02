@@ -1,4 +1,4 @@
-## Babushka Macros: Recursive Visual Programming by Demonstration on a 2D Grid
+## Babushka Macros: Recursive Programming by Demonstration on a 2D Grid
 
 ## Abstract 
 > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.

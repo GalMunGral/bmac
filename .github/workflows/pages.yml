@@ -26,12 +26,12 @@ jobs:
       - run: npm ci
       - env:
           TOKEN: ${{ secrets.TOKEN }}
-        run: npm run build -- --base-href /bmac/
+        run: npm run build -- --base-href /macrobook/
 
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist/bmac/browser
+          path: dist/macrobook/browser
 
       - name: Deploy to GitHub Pages
         id: deployment

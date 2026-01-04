@@ -6,7 +6,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "bmac": {
+    "macrobook": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -56,10 +56,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "bmac:build:production"
+              "buildTarget": "macrobook:build:production"
             },
             "development": {
-              "buildTarget": "bmac:build:development"
+              "buildTarget": "macrobook:build:development"
             }
           },
           "defaultConfiguration": "development"

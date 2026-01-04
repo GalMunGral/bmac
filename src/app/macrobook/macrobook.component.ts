@@ -21,12 +21,12 @@ import {
 } from '../../core/types';
 
 @Component({
-  selector: 'app-bmac',
+  selector: 'app-macrobook',
   imports: [ButtonModule],
-  templateUrl: './bmac.html',
-  styleUrl: './bmac.css',
+  templateUrl: './macrobook.component.html',
+  styleUrl: './macrobook.component.css',
 })
-export class BMAC {
+export class Macrobook {
   readonly vm = new VirtualMachine();
   readonly recorder = new MacroRecorder(this.vm);
 

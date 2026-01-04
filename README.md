@@ -1,4 +1,4 @@
-# Babushka Macros: Programming by Demonstration on a 2D Grid
+# Macrobook: Programming by Demonstration on a 2D Grid
 
 ## Abstract 
 > Computing is normally done by writing certain symbols on paper. We may suppose this paper is divided into squares like a child's arithmetic book.
